@@ -1,7 +1,7 @@
 # Ferremas - Sistema de Gestión para Ferreterías
 
 ## Descripción
-Ferremas es un sistema completo de gestión para ferreterías que consta de un frontend moderno en React y un backend robusto en Node.js. El sistema está diseñado para proporcionar una solución integral para la gestión de inventario, ventas, usuarios y operaciones diarias de una ferretería.
+Ferremas es un sistema completo de gestión para ferreterías que consta de un frontend moderno en React y un backend robusto en Django. El sistema está diseñado para proporcionar una solución integral para la gestión de inventario, ventas, usuarios y operaciones diarias de una ferretería.
 
 ## Características del Sistema
 ### Frontend
@@ -15,10 +15,10 @@ Ferremas es un sistema completo de gestión para ferreterías que consta de un f
 - Gestión de usuarios y roles
 
 ### Backend
-- API RESTful
+- API RESTful con Django REST Framework
 - Autenticación JWT
-- Base de datos relacional
-- Manejo de sesiones
+- Base de datos PostgreSQL
+- Sistema de permisos y grupos
 - Validación de datos
 - Sistema de logs
 - Gestión de errores
@@ -37,16 +37,17 @@ Ferremas es un sistema completo de gestión para ferreterías que consta de un f
 - Redux (para gestión de estado)
 
 ### Backend
-- Node.js
-- Express.js
+- Python 3.8+
+- Django 4.2+
+- Django REST Framework
 - PostgreSQL
-- Sequelize ORM
 - JWT
-- Bcrypt
-- Cors
-- Dotenv
+- Django Cors Headers
+- Django Filter
+- Django Simple JWT
 
 ## Prerrequisitos
+- Python 3.8 o superior
 - Node.js (v14 o superior)
 - npm o yarn
 - Git
@@ -62,30 +63,46 @@ git clone [url-del-repositorio]
 cd ferremas_backend
 ```
 
-2. Instalar dependencias:
+2. Crear y activar entorno virtual:
 ```bash
-npm install
+python -m venv venv
+# En Windows
+venv\Scripts\activate
+# En Linux/Mac
+source venv/bin/activate
 ```
 
-3. Configurar variables de entorno:
+3. Instalar dependencias:
+```bash
+pip install -r requirements.txt
+```
+
+4. Configurar variables de entorno:
 Crear archivo `.env` en la raíz del proyecto backend:
 ```env
-DB_HOST=localhost
-DB_USER=tu_usuario
-DB_PASS=tu_contraseña
+DEBUG=True
+SECRET_KEY=tu_clave_secreta
 DB_NAME=ferremas_db
-JWT_SECRET=tu_secreto_jwt
-PORT=3000
+DB_USER=tu_usuario
+DB_PASSWORD=tu_contraseña
+DB_HOST=localhost
+DB_PORT=5432
 ```
 
-4. Inicializar la base de datos:
+5. Realizar migraciones:
 ```bash
-npm run db:setup
+python manage.py makemigrations
+python manage.py migrate
 ```
 
-5. Iniciar el servidor:
+6. Crear superusuario:
 ```bash
-npm run dev
+python manage.py createsuperuser
+```
+
+7. Iniciar el servidor:
+```bash
+python manage.py runserver
 ```
 
 ### Frontend
@@ -102,7 +119,7 @@ npm install
 3. Configurar variables de entorno:
 Crear archivo `.env` en la raíz del proyecto frontend:
 ```env
-VITE_API_URL=http://localhost:3000
+VITE_API_URL=http://localhost:8000
 ```
 
 4. Iniciar el servidor de desarrollo:
@@ -115,16 +132,20 @@ npm run dev
 ### Backend
 ```
 ferremas_backend/
-├── src/
-│   ├── config/         # Configuraciones
-│   ├── controllers/    # Controladores
-│   ├── models/        # Modelos de base de datos
-│   ├── routes/        # Rutas de la API
-│   ├── middleware/    # Middleware
-│   ├── utils/         # Utilidades
-│   └── app.js         # Punto de entrada
-├── tests/             # Pruebas
-└── ...
+├── manage.py
+├── ferremas/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── apps/
+│   ├── usuarios/
+│   ├── productos/
+│   ├── ventas/
+│   └── inventario/
+├── templates/
+├── static/
+└── requirements.txt
 ```
 
 ### Frontend
@@ -144,11 +165,11 @@ ferremas_frontend/
 ## Scripts Disponibles
 
 ### Backend
-- `npm run dev` - Iniciar servidor de desarrollo
-- `npm run start` - Iniciar servidor en producción
-- `npm run test` - Ejecutar pruebas
-- `npm run db:setup` - Configurar base de datos
-- `npm run lint` - Ejecutar ESLint
+- `python manage.py runserver` - Iniciar servidor de desarrollo
+- `python manage.py makemigrations` - Crear migraciones
+- `python manage.py migrate` - Aplicar migraciones
+- `python manage.py createsuperuser` - Crear superusuario
+- `python manage.py test` - Ejecutar pruebas
 
 ### Frontend
 - `npm run dev` - Iniciar servidor de desarrollo
@@ -160,7 +181,7 @@ ferremas_frontend/
 1. Asegúrate de tener todos los prerrequisitos instalados
 2. Clona ambos repositorios (frontend y backend)
 3. Configura las bases de datos y variables de entorno
-4. Inicia el servidor backend
+4. Inicia el servidor backend (Django)
 5. Inicia el servidor frontend
 6. Accede a la aplicación en `http://localhost:5173`
 
@@ -174,6 +195,5 @@ Las contribuciones son bienvenidas. Por favor, asegúrate de seguir las mejores 
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
-## Licencia
-Este proyecto está bajo la Licencia MIT.
+
 
