@@ -48,16 +48,26 @@ const Home = () => {
             Tu ferretería en línea de confianza
           </Typography>
 
-          <Button
-            component={Link}
-            to="/login"
-            variant="contained"
-            color="primary"
-            size="large"
-            sx={{ mt: 3 }}
-          >
-            Iniciar sesión
-          </Button>
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+            <Button
+              component={Link}
+              to="/login"
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Iniciar sesión
+            </Button>
+            <Button
+              component={Link}
+              to="/registro"
+              variant="outlined"
+              color="secondary"
+              size="large"
+            >
+              Registrarse
+            </Button>
+          </Box>
 
           {role && (
             <Alert severity="info" sx={{ mt: 3, display: 'inline-block' }}>
