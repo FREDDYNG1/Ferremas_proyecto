@@ -11,6 +11,7 @@ import {
   Grid,
   Paper,
 } from '@mui/material';
+import ResponsiveNavbar from '../components/ResponsiveNavbar';
 
 const Home = () => {
   const [role, setRole] = useState(null);
@@ -28,7 +29,10 @@ const Home = () => {
     }
   }, []);
 
-  return (
+ return (
+  <>
+    <ResponsiveNavbar />
+
     <Box
       sx={{
         minHeight: '100vh',
@@ -110,7 +114,7 @@ const Home = () => {
         </Grid>
       </Container>
     </Box>
-  );
-};
-
+  </>
+)
+}
 export default Home;
