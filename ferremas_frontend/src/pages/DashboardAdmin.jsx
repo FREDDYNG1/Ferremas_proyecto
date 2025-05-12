@@ -1,7 +1,8 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import CrearUsuarioForm from '../components/CrearUsuarioForm';
-import '../styles/DashboardAdmin.css';
+import "../Styles/DashboardAdmin.css";
+
 
 const DashboardAdmin = () => {
   const { user, logout } = useAuth();
