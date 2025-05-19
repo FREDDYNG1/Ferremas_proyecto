@@ -14,10 +14,11 @@ El proyecto está dividido en dos partes principales:
 - Comunicación con el backend mediante Axios
 
 ### Backend (`ferremas_backend/`)
-- Desarrollado con Django (Python)
+- Desarrollado con Django (Python) y Django REST Framework
+- Utiliza Supabase como base de datos y para almacenamiento (futuro)
 - Arquitectura RESTful
-- Sistema de autenticación y autorización
-- Gestión de base de datos
+- Sistema de autenticación y autorización basado en JWT
+- Gestión de base de datos con migraciones de Django
 
 ## Tecnologías Principales
 
@@ -32,19 +33,52 @@ El proyecto está dividido en dos partes principales:
 
 ### Backend
 - Django
+- Django REST Framework
 - Python
-- SQLite/PostgreSQL (configurable)
+- Supabase (Base de Datos y Storage)
+- JWT (JSON Web Tokens)
+- Pillow (para manejo de imágenes)
 
 ## Requisitos Previos
 - Node.js (v16 o superior)
 - Python 3.8 o superior
 - pip (gestor de paquetes de Python)
 - npm o yarn (gestor de paquetes de Node.js)
+- Una instancia de Supabase (configurar credenciales en `ferremas_backend/config/settings.py`)
 
-## Instalación
+## Instalación y Configuración
+
+### Backend
+1. Configurar la conexión a tu base de datos Supabase en `ferremas_backend/config/settings.py`. Puedes usar variables de entorno o configurar directamente (¡recomendado usar variables de entorno para producción!).
+2. Navegar al directorio del backend:
+   ```bash
+   cd ferremas_backend
+   ```
+3. Crear y activar entorno virtual:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # En Windows: venv\Scripts\activate
+   ```
+4. Instalar dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+5. Aplicar migraciones para configurar la base de datos Supabase:
+   ```bash
+   python manage.py migrate
+   ```
+6. **Crear un Superusuario (Administrador) de Django:** Necesario para acceder al panel de administración y crear otros usuarios.
+   ```bash
+   python manage.py createsuperuser
+   ```
+   Sigue las indicaciones para crear el usuario. Asegúrate de asignarle el rol 'admin' directamente en la tabla `usuarios_customeruser` en Supabase si no se asigna automáticamente durante la creación del superusuario.
+7. Iniciar el servidor de desarrollo del backend:
+   ```bash
+   python manage.py runserver
+   ```
 
 ### Frontend
-1. Navegar al directorio del frontend:
+1. Navegar al directorio del frontend en una nueva terminal:
    ```bash
    cd ferremas_frontend
    ```
@@ -52,33 +86,18 @@ El proyecto está dividido en dos partes principales:
    ```bash
    npm install
    ```
-3. Iniciar el servidor de desarrollo:
+3. Iniciar el servidor de desarrollo del frontend:
    ```bash
    npm run dev
    ```
 
-### Backend
-1. Navegar al directorio del backend:
-   ```bash
-   cd ferremas_backend
-   ```
-2. Crear y activar entorno virtual:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # En Windows: venv\Scripts\activate
-   ```
-3. Instalar dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Aplicar migraciones:
-   ```bash
-   python manage.py migrate
-   ```
-5. Iniciar el servidor:
-   ```bash
-   python manage.py runserver
-   ```
+## Funcionalidades Implementadas (Parcial)
+- **Autenticación:** Registro de clientes, inicio de sesión con JWT para diferentes roles (admin, trabajador, cliente).
+- **Panel de Administración (`/admin`):** Dashboard con enlaces a la gestión de productos y usuarios.
+- **Gestión de Productos (`/admin/productos`):** Listado, creación y edición de productos (incluyendo carga de imágenes en desarrollo).
+- **Gestión de Usuarios (`/admin/usuarios`):** Creación de usuarios (admin/trabajador) y listado de trabajadores.
+- **Páginas de Rol:** Páginas de inicio básicas para Cliente (`/cliente`) y Trabajador (`/trabajador`).
+- **Cambio de Contraseña:** Funcionalidad para cambiar la contraseña.
 
 ## Scripts Disponibles
 
@@ -93,9 +112,8 @@ El proyecto está dividido en dos partes principales:
 ### Frontend
 ```
 ferremas_frontend/
-├── src/              # Código fuente
 ├── public/           # Archivos estáticos
-├── node_modules/     # Dependencias
+├── src/              # Código fuente (componentes, páginas, layouts, context, utils)
 └── ...
 ```
 
@@ -103,6 +121,7 @@ ferremas_frontend/
 ```
 ferremas_backend/
 ├── config/           # Configuración de Django
+├── productos/        # Aplicación de productos
 ├── usuarios/         # Aplicación de usuarios
 ├── venv/            # Entorno virtual
 └── ...
@@ -110,15 +129,12 @@ ferremas_backend/
 
 ## Contribución
 1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+2. Clona tu fork: `git clone [URL de tu fork]`
+3. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+4. Realiza tus cambios.
+5. Haz commit de tus cambios (`git commit -m 'feat: Add some AmazingFeature'`)
+6. Empuja la rama (`git push origin feature/AmazingFeature`)
+7. Abre un Pull Request.
 
-## Licencia
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Contacto
-Para soporte o consultas, por favor contactar al equipo de desarrollo.
 
 
