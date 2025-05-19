@@ -17,6 +17,8 @@ import ProductosLista from './pages/productos/ProductosLista';
 import ProductoForm from './components/productos/ProductoForm';
 import CrearUsuarioForm from './components/CrearUsuarioForm';
 import TrabajadoresLista from './pages/usuarios/TrabajadoresLista';
+import EditarTrabajador from './pages/usuarios/EditarTrabajador';
+import ProductosPublicos from './pages/productos/ProductosPublicos';
 
 const App = () => {
   return (
@@ -27,9 +29,13 @@ const App = () => {
     }}>
       <Box sx={{ flex: 1 }}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Home page now shows public products */}
+          <Route path="/" element={<ProductosPublicos />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<RegistroCliente />} />
+
+          {/* Public Products Route (can keep it as an alternative) */}
+          <Route path="/productos" element={<ProductosPublicos />} />
 
           {/* Admin Home route (no layout) - Matches exactly /admin */}
           <Route
@@ -57,6 +63,16 @@ const App = () => {
              element={
                <PrivateRoute requiredRoles={['admin']}>
                  <TrabajadoresLista />
+               </PrivateRoute>
+             }
+           />
+
+          {/* Route for editing workers (no layout) - Separate route */}
+           <Route 
+             path="/admin/usuarios/trabajador/:id/editar"
+             element={
+               <PrivateRoute requiredRoles={['admin']}>
+                 <EditarTrabajador />
                </PrivateRoute>
              }
            />

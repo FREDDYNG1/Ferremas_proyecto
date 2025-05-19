@@ -63,6 +63,41 @@ class UsuarioListView(generics.ListAPIView):
             queryset = queryset.filter(role=rol)
         return queryset
 
+class DetalleTrabajadorAPIView(generics.RetrieveAPIView):
+    queryset = CustomerUser.objects.filter(role='trabajador')
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated, EsAdministrador]
+    lookup_field = 'id'
+
+class EditarTrabajadorAPIView(generics.UpdateAPIView):
+    queryset = CustomerUser.objects.filter(role='trabajador')
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated, EsAdministrador]
+    lookup_field = 'id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response({
+            "mensaje": "Trabajador actualizado correctamente",
+            "trabajador": serializer.data
+        })
+
+class EliminarTrabajadorAPIView(generics.DestroyAPIView):
+    queryset = CustomerUser.objects.filter(role='trabajador')
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated, EsAdministrador]
+    lookup_field = 'id'
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            "mensaje": "Trabajador eliminado correctamente"
+        }, status=status.HTTP_200_OK)
+
 class CambiarPasswordAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
