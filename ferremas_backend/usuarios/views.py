@@ -51,6 +51,18 @@ class CrearUsuarioPorAdminAPIView(generics.CreateAPIView):
     serializer_class = CrearUsuarioPorAdminSerializer
     permission_classes = [IsAuthenticated, EsAdministrador]
 
+class UsuarioListView(generics.ListAPIView):
+    queryset = CustomerUser.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated, EsAdministrador]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        rol = self.request.query_params.get('rol', None)
+        if rol is not None:
+            queryset = queryset.filter(role=rol)
+        return queryset
+
 class CambiarPasswordAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

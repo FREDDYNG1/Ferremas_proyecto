@@ -143,44 +143,77 @@ const ResponsiveNavbar = () => {
                   <Avatar alt={user?.email} src="/static/images/avatar/2.jpg" />
                 </IconButton>
               </Tooltip>
-              <Menu
-                sx={{ mt: '45px' }}
-                id="menu-appbar"
-                anchorEl={anchorElUser}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(anchorElUser)}
-                onClose={handleCloseUserMenu}
-              >
-                <MenuItem onClick={() => {
-                  navigate('/perfil');
-                  handleCloseUserMenu();
-                }}>
-                  <ListItemIcon>
-                    <Person fontSize="small" />
-                  </ListItemIcon>
-                  <Typography textAlign="center">Perfil</Typography>
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>
-                  <ListItemIcon>
-                    <ExitToApp fontSize="small" />
-                  </ListItemIcon>
-                  <Typography textAlign="center">Cerrar Sesión</Typography>
-                </MenuItem>
-              </Menu>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
+                      <Menu
+                        sx={{ mt: '45px' }}
+                        id="menu-appbar"
+                        anchorEl={anchorElUser}
+                        anchorOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right',
+                        }}
+                        keepMounted
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right',
+                        }}
+                        open={Boolean(anchorElUser)}
+                        onClose={handleCloseUserMenu}
+                      >
+                        {user ? (
+                          <>
+                            <MenuItem onClick={() => {
+                              if (user?.role === 'admin') {
+                                navigate('/admin');
+                              } else if (user?.role === 'trabajador') {
+                                navigate('/trabajador');
+                              } else if (user?.role === 'cliente') {
+                                navigate('/cliente');
+                              } else {
+                                navigate('/');
+                              }
+                              handleCloseUserMenu();
+                            }}>
+                              <ListItemIcon>
+                                <Person fontSize="small" />
+                              </ListItemIcon>
+                              <Typography textAlign="center">Perfil</Typography>
+                            </MenuItem>
+                            <MenuItem onClick={handleLogout}>
+                              <ListItemIcon>
+                                <ExitToApp fontSize="small" />
+                              </ListItemIcon>
+                              <Typography textAlign="center">Cerrar Sesión</Typography>
+                            </MenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <MenuItem onClick={() => {
+                              navigate('/login');
+                              handleCloseUserMenu();
+                            }}>
+                              <ListItemIcon>
+                                <ExitToApp fontSize="small" />
+                              </ListItemIcon>
+                              <Typography textAlign="center">Iniciar Sesión</Typography>
+                            </MenuItem>
+                            <MenuItem onClick={() => {
+                              navigate('/registro');
+                              handleCloseUserMenu();
+                            }}>
+                              <ListItemIcon>
+                                <Person fontSize="small" />
+                              </ListItemIcon>
+                              <Typography textAlign="center">Registrarse</Typography>
+                            </MenuItem>
+                          </>
+                        )}
+                      </Menu>
+                    </Box>
+                  </Toolbar>
+                </Container>
+              </AppBar>
 
-      {/* Drawer móvil */}
+              {/* Drawer móvil */}
       <Drawer
         variant="temporary"
         anchor="left"

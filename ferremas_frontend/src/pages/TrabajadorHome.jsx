@@ -42,7 +42,7 @@ const TrabajadorHome = () => {
                 color="primary"
                 fullWidth
                 sx={{ mt: 2 }}
-                onClick={() => navigate('/inventario')}
+                onClick={() => navigate('/admin/productos')}
               >
                 Ver Inventario
               </Button>

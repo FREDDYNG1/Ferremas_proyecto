@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencias
 node_modules
 dist
 dist-ssr
@@ -23,13 +24,19 @@ dist-ssr
 *.sln
 *.sw?
 
+# Variables de entorno
 .env
 .env.*
 
+# Archivos de sistema
 Thumbs.db
 
+# Archivos temporales
 *.tmp
 *.temp
 *.bak
 
+# Archivos de caché
+.cache/
+.temp/
 .eslintcache

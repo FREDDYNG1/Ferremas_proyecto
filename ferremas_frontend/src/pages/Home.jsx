@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
+import Footer from '../components/Footer';
 
 import {
   Container,
@@ -11,6 +12,7 @@ import {
   Grid,
   Paper,
 } from '@mui/material';
+import ResponsiveNavbar from '../components/ResponsiveNavbar';
 
 const Home = () => {
   const [role, setRole] = useState(null);
@@ -28,7 +30,10 @@ const Home = () => {
     }
   }, []);
 
-  return (
+ return (
+  <>
+    <ResponsiveNavbar />
+
     <Box
       sx={{
         minHeight: '100vh',
@@ -108,9 +113,11 @@ const Home = () => {
             </Paper>
           </Grid>
         </Grid>
+        
       </Container>
     </Box>
-  );
-};
-
+    <Footer />
+  </>
+)
+}
 export default Home;
