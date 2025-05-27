@@ -19,6 +19,7 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Badge
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -29,12 +30,16 @@ import {
   Assessment,
   Home,
 } from '@mui/icons-material';
+import { useCarrito } from '../context/CarritoContext';
 
 const ResponsiveNavbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { carrito } = useCarrito();
+
+  const totalItems = carrito && carrito.items ? carrito.items.reduce((sum, item) => sum + item.cantidad, 0) : 0;
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -136,14 +141,80 @@ const ResponsiveNavbar = () => {
               ))}
             </Box>
 
-            {/* Menú de usuario */}
-            <Box sx={{ flexGrow: 0 }}>
-              <Tooltip title="Abrir menú">
-                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt={user?.email} src="/static/images/avatar/2.jpg" />
+            {/* Menú de usuario y Carrito */}
+            <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center' }}>
+              {/* Ícono del carrito siempre visible */}
+              <Tooltip title="Ver Carrito">
+                <IconButton 
+                  onClick={() => navigate('/carrito')}
+                  color="inherit" // Para que el ícono sea blanco en la AppBar
+                  sx={{ mr: 1 }} // Un poco de margen a la derecha
+                >
+                  <Badge badgeContent={totalItems} color="error">
+                    <ShoppingCart />
+                  </Badge>
                 </IconButton>
               </Tooltip>
-                      <Menu
+
+              {user ? (
+                // Si el usuario está autenticado, mostrar el avatar y el menú de usuario
+                <Box sx={{ flexGrow: 0 }}>
+                  <Tooltip title="Abrir menú">
+                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                      <Avatar alt={user?.email} src="/static/images/avatar/2.jpg" />
+                    </IconButton>
+                  </Tooltip>
+                  <Menu
+                    sx={{ mt: '45px' }}
+                    id="menu-appbar"
+                    anchorEl={anchorElUser}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    keepMounted
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    open={Boolean(anchorElUser)}
+                    onClose={handleCloseUserMenu}
+                  >
+                    <MenuItem onClick={() => {
+                      if (user?.role === 'admin') {
+                        navigate('/admin');
+                      } else if (user?.role === 'trabajador') {
+                        navigate('/trabajador');
+                      } else if (user?.role === 'cliente') {
+                        navigate('/cliente');
+                      } else {
+                        navigate('/');
+                      }
+                      handleCloseUserMenu();
+                    }}>
+                      <ListItemIcon>
+                        <Person fontSize="small" />
+                      </ListItemIcon>
+                      <Typography textAlign="center">Perfil</Typography>
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout}>
+                      <ListItemIcon>
+                        <ExitToApp fontSize="small" />
+                      </ListItemIcon>
+                      <Typography textAlign="center">Cerrar Sesión</Typography>
+                    </MenuItem>
+                  </Menu>
+                </Box>
+              ) : (
+                // Si el usuario no está autenticado, mostrar opciones de Iniciar Sesión y Registrarse
+                <Box sx={{ flexGrow: 0 }}>
+                   <Tooltip title="Abrir menú">
+                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                       {/* Podrías usar un ícono genérico o texto aquí para no autenticados */}
+                      <Avatar /> 
+                    </IconButton>
+                  </Tooltip>
+                   <Menu
                         sx={{ mt: '45px' }}
                         id="menu-appbar"
                         anchorEl={anchorElUser}
@@ -159,61 +230,33 @@ const ResponsiveNavbar = () => {
                         open={Boolean(anchorElUser)}
                         onClose={handleCloseUserMenu}
                       >
-                        {user ? (
-                          <>
-                            <MenuItem onClick={() => {
-                              if (user?.role === 'admin') {
-                                navigate('/admin');
-                              } else if (user?.role === 'trabajador') {
-                                navigate('/trabajador');
-                              } else if (user?.role === 'cliente') {
-                                navigate('/cliente');
-                              } else {
-                                navigate('/');
-                              }
-                              handleCloseUserMenu();
-                            }}>
-                              <ListItemIcon>
-                                <Person fontSize="small" />
-                              </ListItemIcon>
-                              <Typography textAlign="center">Perfil</Typography>
-                            </MenuItem>
-                            <MenuItem onClick={handleLogout}>
-                              <ListItemIcon>
-                                <ExitToApp fontSize="small" />
-                              </ListItemIcon>
-                              <Typography textAlign="center">Cerrar Sesión</Typography>
-                            </MenuItem>
-                          </>
-                        ) : (
-                          <>
-                            <MenuItem onClick={() => {
-                              navigate('/login');
-                              handleCloseUserMenu();
-                            }}>
-                              <ListItemIcon>
-                                <ExitToApp fontSize="small" />
-                              </ListItemIcon>
-                              <Typography textAlign="center">Iniciar Sesión</Typography>
-                            </MenuItem>
-                            <MenuItem onClick={() => {
-                              navigate('/registro');
-                              handleCloseUserMenu();
-                            }}>
-                              <ListItemIcon>
-                                <Person fontSize="small" />
-                              </ListItemIcon>
-                              <Typography textAlign="center">Registrarse</Typography>
-                            </MenuItem>
-                          </>
-                        )}
+                        <MenuItem onClick={() => {
+                          navigate('/login');
+                          handleCloseUserMenu();
+                        }}>
+                          <ListItemIcon>
+                            <ExitToApp fontSize="small" />
+                          </ListItemIcon>
+                          <Typography textAlign="center">Iniciar Sesión</Typography>
+                        </MenuItem>
+                        <MenuItem onClick={() => {
+                          navigate('/registro');
+                          handleCloseUserMenu();
+                        }}>
+                          <ListItemIcon>
+                            <Person fontSize="small" />
+                          </ListItemIcon>
+                          <Typography textAlign="center">Registrarse</Typography>
+                        </MenuItem>
                       </Menu>
-                    </Box>
-                  </Toolbar>
-                </Container>
-              </AppBar>
+                </Box>
+              )}
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
 
-              {/* Drawer móvil */}
+      {/* Drawer móvil */}
       <Drawer
         variant="temporary"
         anchor="left"

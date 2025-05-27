@@ -1,8 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Producto
-from .serializers import ProductoSerializer
+from .models import Producto, Tienda, StockTienda
+from .serializers import ProductoSerializer, TiendaSerializer, StockTiendaSerializer
 
 class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.all()
@@ -19,7 +19,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
         Permitir acceso para listar, ver detalles y categorías sin autenticación.
         Requerir autenticación y rol admin o trabajador para otras acciones.
         """
-        if self.action in ['list', 'retrieve', 'categories']:
+        if self.action in ['list', 'retrieve', 'categories', 'stock_por_tienda']:
             permission_classes = [permissions.AllowAny]
         else:
             # Para crear, actualizar, eliminar: requiere autenticación y rol admin o trabajador
@@ -50,3 +50,92 @@ class ProductoViewSet(viewsets.ModelViewSet):
         """
         categories = Producto.objects.values_list('categoria', flat=True).distinct()
         return Response(list(categories))
+
+    @action(detail=True, methods=['get'])
+    def stock_por_tienda(self, request, pk=None):
+        producto = self.get_object()
+        stock = StockTienda.objects.filter(producto=producto)
+        serializer = StockTiendaSerializer(stock, many=True)
+        return Response(serializer.data)
+
+class TiendaViewSet(viewsets.ModelViewSet):
+    queryset = Tienda.objects.all()
+    serializer_class = TiendaSerializer
+
+    @action(detail=True, methods=['get'])
+    def stock(self, request, pk=None):
+        tienda = self.get_object()
+        stock = StockTienda.objects.filter(tienda=tienda)
+        serializer = StockTiendaSerializer(stock, many=True)
+        return Response(serializer.data)
+
+class StockTiendaViewSet(viewsets.ModelViewSet):
+    queryset = StockTienda.objects.all()
+    serializer_class = StockTiendaSerializer
+
+    @action(detail=True, methods=['post'])
+    def ajustar_stock(self, request, pk=None):
+        stock = self.get_object()
+        cantidad = request.data.get('cantidad', 0)
+        
+        try:
+            cantidad = int(cantidad)
+            stock.cantidad += cantidad
+            if stock.cantidad < 0:
+                return Response(
+                    {'error': 'No se puede tener stock negativo'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            stock.save()
+            serializer = self.get_serializer(stock)
+            return Response(serializer.data)
+        except ValueError:
+            return Response(
+                {'error': 'La cantidad debe ser un número entero'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
+    def transferir_stock(self, request):
+        producto_id = request.data.get('producto')
+        tienda_origen_id = request.data.get('tienda_origen')
+        tienda_destino_id = request.data.get('tienda_destino')
+        cantidad = request.data.get('cantidad')
+
+        try:
+            cantidad = int(cantidad)
+            stock_origen = StockTienda.objects.get(
+                producto_id=producto_id,
+                tienda_id=tienda_origen_id
+            )
+            stock_destino, created = StockTienda.objects.get_or_create(
+                producto_id=producto_id,
+                tienda_id=tienda_destino_id,
+                defaults={'cantidad': 0, 'stock_minimo': 0}
+            )
+
+            if stock_origen.cantidad < cantidad:
+                return Response(
+                    {'error': 'No hay suficiente stock en la tienda de origen'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            stock_origen.cantidad -= cantidad
+            stock_destino.cantidad += cantidad
+            stock_origen.save()
+            stock_destino.save()
+
+            return Response({
+                'origen': StockTiendaSerializer(stock_origen).data,
+                'destino': StockTiendaSerializer(stock_destino).data
+            })
+        except StockTienda.DoesNotExist:
+            return Response(
+                {'error': 'Stock no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ValueError:
+            return Response(
+                {'error': 'La cantidad debe ser un número entero'},
+                status=status.HTTP_400_BAD_REQUEST
+            )

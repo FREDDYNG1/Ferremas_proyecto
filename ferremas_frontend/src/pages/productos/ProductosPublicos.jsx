@@ -4,7 +4,7 @@ import {
   Box,
   Typography,
   CircularProgress,
-  Alert,
+  Alert as MuiAlertComponent,
   Grid,
   Card,
   CardMedia,
@@ -16,11 +16,20 @@ import {
   ListItemButton,
   ListItemText,
   Divider,
-  Stack
+  Stack,
+  Snackbar
 } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 import api from '../../utils/axiosConfig';
 import ResponsiveNavbar from '../../components/ResponsiveNavbar';
 import Footer from '../../components/Footer';
+import { useCarrito } from '../../context/CarritoContext';
+
+const SnackbarAlert = React.forwardRef(function SnackbarAlert(
+  props, ref
+) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const ProductosPublicos = () => {
   const location = useLocation();
@@ -29,6 +38,11 @@ const ProductosPublicos = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { agregarItem } = useCarrito();
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const fetchProductos = async (categoria = null) => {
     setLoading(true);
@@ -56,9 +70,23 @@ const ProductosPublicos = () => {
     }
   };
 
-  const handleAddToCart = (productoId) => {
+  const handleAddToCart = async (productoId) => {
     console.log(`Agregar producto ${productoId} al carrito`);
-    alert('Funcionalidad de agregar al carrito no implementada aún.');
+    try {
+      await agregarItem(productoId, 1);
+      setSnackbarMessage('Producto agregado al carrito!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error al agregar producto al carrito:', error);
+      let errorMessage = 'Error al agregar el producto al carrito. Inténtalo de nuevo.';
+      if (error.response && error.response.status === 401) {
+        errorMessage = 'Debes iniciar sesión para agregar productos al carrito.';
+      }
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleBuyNow = (productoId) => {
@@ -122,12 +150,16 @@ const ProductosPublicos = () => {
             </Box>
           ) : error ? (
             <Box sx={{ mt: 4 }}>
-              <Alert severity="error">{error}</Alert>
+              <MuiAlert severity="error">{error}</MuiAlert>
             </Box>
           ) : productos.length > 0 ? (
             <Grid container spacing={3} alignItems="stretch">
               {productos.map((producto) => (
-                <Grid item key={producto.id} xs={12} sm={6} md={4} lg={3}>
+                <Grid item key={producto.id} xs={12} sx={{ 
+                  '@media (min-width: 600px)': { width: '50%' },
+                  '@media (min-width: 900px)': { width: '33.33%' },
+                  '@media (min-width: 1200px)': { width: '25%' }
+                }}>
                   <Card
                     sx={{
                       height: '100%',
@@ -150,6 +182,10 @@ const ProductosPublicos = () => {
                       }}
                       image={producto.imagen_url}
                       alt={producto.nombre}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/placeholder.png';
+                      }}
                     />
                     <CardContent sx={{ flexGrow: 1, pb: 0 }}>
                       {producto.marca && (
@@ -175,9 +211,27 @@ const ProductosPublicos = () => {
                         {producto.descripcion}
                       </Typography>
                       <Typography variant="h6" color="text.primary" sx={{ fontWeight: 'bold' }}>
-                        ${producto.precio.toFixed(2)}
+                        ${Math.floor(producto.precio)}
                       </Typography>
 
+                    </CardContent>
+                    <CardContent sx={{ pt: 0.5, pb: 1.5, flexGrow: 0 }}>
+                      <Typography variant="body2" color="text.primary" sx={{ fontWeight: 'bold' }}>
+                        Stock Total: {producto.stock_total}
+                      </Typography>
+                      {producto.stock_por_tienda && producto.stock_por_tienda.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Stock por Tienda:
+                          </Typography>
+                          {
+                            producto.stock_por_tienda.sort((a, b) => a.tienda_nombre.localeCompare(b.tienda_nombre)).map(stock => (
+                            <Typography key={stock.tienda.id} variant="caption" color="text.secondary" display="block" sx={{ ml: 1 }}>
+                              - {stock.tienda_nombre}: {stock.cantidad}
+                            </Typography>
+                          ))}
+                        </Box>
+                      )}
                     </CardContent>
                     <CardActions sx={{ pt: 1, justifyContent: 'flex-start' }}>
                       <Button size="small" onClick={() => handleAddToCart(producto.id)}>Agregar al Carrito</Button>
@@ -195,6 +249,12 @@ const ProductosPublicos = () => {
         </Box>
       </Box>
       <Footer />
+
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)}>
+        <SnackbarAlert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </SnackbarAlert>
+      </Snackbar>
     </>
   );
 };

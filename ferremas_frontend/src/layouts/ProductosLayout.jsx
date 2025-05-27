@@ -8,6 +8,7 @@ import {
   ListItem, 
   ListItemIcon, 
   ListItemText,
+  ListItemButton,
   Typography,
   Box,
   IconButton
@@ -51,23 +52,29 @@ const ProductosLayout = () => {
         <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
           <List>
-            <ListItem button component={Link} to="/admin/productos">
-              <ListItemIcon>
-                <InventoryIcon />
-              </ListItemIcon>
-              <ListItemText primary="Productos" />
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/admin/productos">
+                <ListItemIcon>
+                  <InventoryIcon />
+                </ListItemIcon>
+                <ListItemText primary="Productos" />
+              </ListItemButton>
             </ListItem>
-            <ListItem button component={Link} to="/admin/productos/crear">
-              <ListItemIcon>
-                <AddIcon />
-              </ListItemIcon>
-              <ListItemText primary="Crear Producto" />
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/admin/productos/crear">
+                <ListItemIcon>
+                  <AddIcon />
+                </ListItemIcon>
+                <ListItemText primary="Crear Producto" />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={handleLogout}>
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="Cerrar Sesión" />
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText primary="Cerrar Sesión" />
+              </ListItemButton>
             </ListItem>
           </List>
         </Box>

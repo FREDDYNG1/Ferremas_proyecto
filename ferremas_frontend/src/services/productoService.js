@@ -46,4 +46,4 @@ export const productoService = {
     const response = await api.delete(`/productos/${id}/`);
     return response.data;
   }
-}; 
+};
