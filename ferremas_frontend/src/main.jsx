@@ -6,6 +6,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import theme from './theme';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <CurrencyProvider>
+            <App />
+          </CurrencyProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

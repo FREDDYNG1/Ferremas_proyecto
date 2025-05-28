@@ -19,7 +19,10 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  Badge
+  Badge,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -31,6 +34,7 @@ import {
   Home,
 } from '@mui/icons-material';
 import { useCarrito } from '../context/CarritoContext';
+import { useCurrency } from '../context/CurrencyContext';
 
 const ResponsiveNavbar = () => {
   const { user, logout } = useAuth();
@@ -38,6 +42,7 @@ const ResponsiveNavbar = () => {
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { carrito } = useCarrito();
+  const { currency, setCurrency } = useCurrency();
 
   const totalItems = carrito && carrito.items ? carrito.items.reduce((sum, item) => sum + item.cantidad, 0) : 0;
 
@@ -57,6 +62,10 @@ const ResponsiveNavbar = () => {
     logout();
     navigate('/');
     handleCloseUserMenu();
+  };
+
+  const handleCurrencyChange = (event) => {
+    setCurrency(event.target.value);
   };
 
   const getNavItems = () => {
@@ -98,6 +107,23 @@ const ResponsiveNavbar = () => {
           </ListItem>
         ))}
       </List>
+      <Divider sx={{ my: 2 }} />
+      <Box sx={{ px: 2, pb: 2 }}>
+        <FormControl fullWidth size="small">
+          <InputLabel id="currency-select-label">Moneda</InputLabel>
+          <Select
+            labelId="currency-select-label"
+            id="currency-select"
+            value={currency}
+            label="Moneda"
+            onChange={handleCurrencyChange}
+          >
+            <MenuItem value={"USD"}>USD</MenuItem>
+            <MenuItem value={"EUR"}>EUR</MenuItem>
+            <MenuItem value={"CLP"}>CLP</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
     </Box>
   );
 
@@ -106,7 +132,6 @@ const ResponsiveNavbar = () => {
       <AppBar position="static">
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            {/* Logo y menú móvil */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -117,17 +142,15 @@ const ResponsiveNavbar = () => {
               <MenuIcon />
             </IconButton>
 
-            {/* Logo */}
             <Typography
               variant="h6"
               noWrap
               component="div"
-              sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' } }}
+              sx={{ mr: 2, flexGrow: 1, display: { xs: 'none', sm: 'flex' } }}
             >
               Ferremas 🛠️
             </Typography>
 
-            {/* Menú desktop */}
             <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' } }}>
               {getNavItems().map((item) => (
                 <Button
@@ -141,14 +164,30 @@ const ResponsiveNavbar = () => {
               ))}
             </Box>
 
-            {/* Menú de usuario y Carrito */}
+            <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', mr: 2 }}>
+               <FormControl variant="outlined" size="small" sx={{ minWidth: 80 }}>
+                <InputLabel id="currency-select-label-desktop">Moneda</InputLabel>
+                <Select
+                  labelId="currency-select-label-desktop"
+                  id="currency-select-desktop"
+                  value={currency}
+                  label="Moneda"
+                  onChange={handleCurrencyChange}
+                  sx={{ color: 'white', '.MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255, 255, 255, 0.5)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'white' }, '.MuiSvgIcon-root': { color: 'white' } }}
+                >
+                  <MenuItem value={"USD"}>USD</MenuItem>
+                  <MenuItem value={"EUR"}>EUR</MenuItem>
+                  <MenuItem value={"CLP"}>CLP</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
             <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center' }}>
-              {/* Ícono del carrito siempre visible */}
               <Tooltip title="Ver Carrito">
                 <IconButton 
                   onClick={() => navigate('/carrito')}
-                  color="inherit" // Para que el ícono sea blanco en la AppBar
-                  sx={{ mr: 1 }} // Un poco de margen a la derecha
+                  color="inherit"
+                  sx={{ mr: 1 }}
                 >
                   <Badge badgeContent={totalItems} color="error">
                     <ShoppingCart />
@@ -157,7 +196,6 @@ const ResponsiveNavbar = () => {
               </Tooltip>
 
               {user ? (
-                // Si el usuario está autenticado, mostrar el avatar y el menú de usuario
                 <Box sx={{ flexGrow: 0 }}>
                   <Tooltip title="Abrir menú">
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
@@ -206,11 +244,9 @@ const ResponsiveNavbar = () => {
                   </Menu>
                 </Box>
               ) : (
-                // Si el usuario no está autenticado, mostrar opciones de Iniciar Sesión y Registrarse
                 <Box sx={{ flexGrow: 0 }}>
                    <Tooltip title="Abrir menú">
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                       {/* Podrías usar un ícono genérico o texto aquí para no autenticados */}
                       <Avatar /> 
                     </IconButton>
                   </Tooltip>
@@ -256,14 +292,13 @@ const ResponsiveNavbar = () => {
         </Container>
       </AppBar>
 
-      {/* Drawer móvil */}
       <Drawer
         variant="temporary"
         anchor="left"
         open={mobileOpen}
         onClose={handleDrawerToggle}
         ModalProps={{
-          keepMounted: true, // Mejor rendimiento en dispositivos móviles
+          keepMounted: true,
         }}
         sx={{
           display: { xs: 'block', sm: 'none' },

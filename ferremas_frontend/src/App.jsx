@@ -26,27 +26,16 @@ import { CarritoProvider } from './context/CarritoContext';
 const App = () => {
   return (
     <CarritoProvider>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        minHeight: '100vh'
-      }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
         <Box sx={{ flex: 1 }}>
           <Routes>
-            {/* Home page now shows public products */}
             <Route path="/" element={<ProductosPublicos />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<RegistroCliente />} />
-
-            {/* Public Products Route (can keep it as an alternative) */}
             <Route path="/productos" element={<ProductosPublicos />} />
-            
-            {/* Ruta para la página del carrito */}
-            <Route path="/carrito" element={
-              <CarritoPage />
-            } />
+            <Route path="/carrito" element={<CarritoPage />} />
 
-            {/* Admin Home route (no layout) - Matches exactly /admin */}
             <Route
               path="/admin"
               element={
@@ -55,60 +44,45 @@ const App = () => {
                 </PrivateRoute>
               }
             />
-
-            {/* Route for creating users (no layout) - Separate route */}
-             <Route 
-               path="/admin/usuarios/crear"
-               element={
-                 <PrivateRoute requiredRoles={['admin', 'trabajador']}>
-                   <CrearUsuarioForm />
-                 </PrivateRoute>
-               }
-             />
-
-            {/* Route for listing workers (no layout) - Separate route */}
-             <Route 
-               path="/admin/usuarios/trabajadores"
-               element={
-                 <PrivateRoute requiredRoles={['admin']}>
-                   <TrabajadoresLista />
-                 </PrivateRoute>
-               }
-             />
-
-            {/* Route for editing workers (no layout) - Separate route */}
-             <Route 
-               path="/admin/usuarios/trabajador/:id/editar"
-               element={
-                 <PrivateRoute requiredRoles={['admin']}>
-                   <EditarTrabajador />
-                 </PrivateRoute>
-               }
-             />
-
-            {/* Admin Management routes (uses ProductosLayout) - Matches /admin/* (except exact /admin) */}
-             <Route
-               path="/admin"
-               element={
-                 <PrivateRoute requiredRoles={['admin', 'trabajador']}>
-                   <ProductosLayout /> {/* This route renders the layout for its children */}
-                 </PrivateRoute>
-               }
-             >
-               {/* Nested routes within /admin that use ProductosLayout */}
-               {/* These routes will render within the <Outlet> in ProductosLayout */}
-               {/* No index route needed here as /admin is handled by the route above */}
-               {/* Remove usuarios/crear from here as it's now a separate route */}
-               <Route path="productos" element={<ProductosLista />} />
-               <Route path="productos/crear" element={<ProductosCrear />} />
-               <Route
-                 path="productos/editar/:id"
-                 element={
-                   <ProductoEditWrapper />
-                 }
-               />
-               {/* Add other management routes here (e.g., usuarios lista) */}
-             </Route>
+            <Route
+              path="/admin/usuarios/crear"
+              element={
+                <PrivateRoute requiredRoles={['admin', 'trabajador']}>
+                  <CrearUsuarioForm />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/usuarios/trabajadores"
+              element={
+                <PrivateRoute requiredRoles={['admin']}>
+                  <TrabajadoresLista />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/usuarios/trabajador/:id/editar"
+              element={
+                <PrivateRoute requiredRoles={['admin']}>
+                  <EditarTrabajador />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute requiredRoles={['admin', 'trabajador']}>
+                  <ProductosLayout />
+                </PrivateRoute>
+              }
+            >
+              <Route path="productos" element={<ProductosLista />} />
+              <Route path="productos/crear" element={<ProductosCrear />} />
+              <Route
+                path="productos/editar/:id"
+                element={<ProductoEditWrapper />}
+              />
+            </Route>
 
             <Route
               path="/cliente"
@@ -126,7 +100,7 @@ const App = () => {
                 </PrivateRoute>
               }
             />
-             <Route
+            <Route
               path="/cambiar-password"
               element={
                 <PrivateRoute>
@@ -137,8 +111,6 @@ const App = () => {
             <Route path="*" element={<h1>404 - Página no encontrada</h1>} />
           </Routes>
         </Box>
-        {/* Footer is not rendered globally in App.jsx */}
-        {/* Add Footer to specific pages or layouts where needed */}
       </Box>
     </CarritoProvider>
   );
@@ -150,12 +122,10 @@ const ProductoEditWrapper = () => {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
-    navigate('/admin/productos'); // Redirect to product list after successful edit
+    navigate('/admin/productos');
   };
 
   return <ProductoForm id={id} onSuccess={handleSuccess} />;
 };
 
 export default App;
-
-

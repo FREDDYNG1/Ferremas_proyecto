@@ -10,6 +10,8 @@ load_dotenv()  # Carga automáticamente las variables del archivo .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Carga las variables del archivo .env (asegúrate de que .env esté en la raíz del proyecto)
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     'usuarios',
     'productos',
     'carrito',
+    'conversor_monedas',
 ]
 
 MIDDLEWARE = [
@@ -171,3 +174,6 @@ CORS_ALLOW_HEADERS = [
     'expires',        # Añadir esta cabecera también
     'pragma',         # Añadir esta cabecera también
 ]
+
+CURRENCY_API_KEY = os.getenv("CURRENCY_API_KEY")
+EXCHANGE_RATE_KEY = os.getenv("EXCHANGE_RATE_KEY")

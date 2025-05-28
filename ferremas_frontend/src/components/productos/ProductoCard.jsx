@@ -1,21 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Card, 
   CardMedia, 
   CardContent, 
   Typography, 
   CardActions, 
-  Button,
-  Box
+  Button
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { convertirMoneda } from '../../services/mondeaService'; // Ajusta la ruta si es diferente
 
 const ProductoCard = ({ producto, onDelete }) => {
   const navigate = useNavigate();
-  
-  // Asegurarse de que la imagen siempre se cargue fresca
   const imagenUrl = producto.imagen_url || '/placeholder.png';
+
+  // Leer la moneda seleccionada del usuario (guardada desde el selector de país)
+  const moneda = localStorage.getItem('moneda') || 'USD';
+  const [precioConvertido, setPrecioConvertido] = useState(producto.precio);
+
+  useEffect(() => {
+    const convertir = async () => {
+      if (moneda !== 'USD') {
+        try {
+          const data = await convertirMoneda({
+            cantidad: producto.precio,
+            origen: 'USD',
+            destino: moneda
+          });
+          setPrecioConvertido(data.resultado);
+        } catch (error) {
+          console.error('Error al convertir moneda:', error);
+        }
+      }
+    };
+
+    convertir();
+  }, [producto.precio, moneda]);
+
+  // Formatear el precio con el símbolo correcto
+  const formatoPrecio = new Intl.NumberFormat('es', {
+    style: 'currency',
+    currency: moneda
+  });
 
   return (
     <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -24,14 +51,10 @@ const ProductoCard = ({ producto, onDelete }) => {
         height="200"
         image={imagenUrl}
         alt={producto.nombre}
-        // Forzar recarga de la imagen
         sx={{ 
           objectFit: 'contain',
-          '& img': {
-            objectFit: 'contain'
-          }
+          '& img': { objectFit: 'contain' }
         }}
-        // Forzar recarga de la imagen
         onError={(e) => {
           e.target.onerror = null;
           e.target.src = '/placeholder.png';
@@ -51,7 +74,7 @@ const ProductoCard = ({ producto, onDelete }) => {
           Stock: {producto.stock_total}
         </Typography>
         <Typography variant="h6" color="primary">
-          ${producto.precio}
+          {formatoPrecio.format(precioConvertido)}
         </Typography>
       </CardContent>
       <CardActions>
@@ -75,4 +98,4 @@ const ProductoCard = ({ producto, onDelete }) => {
   );
 };
 
-export default ProductoCard; 
+export default ProductoCard;

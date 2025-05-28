@@ -24,6 +24,7 @@ import api from '../../utils/axiosConfig';
 import ResponsiveNavbar from '../../components/ResponsiveNavbar';
 import Footer from '../../components/Footer';
 import { useCarrito } from '../../context/CarritoContext';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const SnackbarAlert = React.forwardRef(function SnackbarAlert(
   props, ref
@@ -43,6 +44,8 @@ const ProductosPublicos = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  const { currency } = useCurrency();
 
   const fetchProductos = async (categoria = null) => {
     setLoading(true);
@@ -69,6 +72,45 @@ const ProductosPublicos = () => {
       console.error('Error fetching categorias:', err);
     }
   };
+
+  const convertPrice = async (cantidad, monedaOrigen, monedaDestino) => {
+    if (!cantidad || !monedaOrigen || !monedaDestino || monedaOrigen === monedaDestino) {
+      return cantidad;
+    }
+    try {
+      const response = await api.post('/convertir-moneda/', {
+        cantidad: cantidad,
+        origen: monedaOrigen,
+        destino: monedaDestino,
+      });
+      if (response.data && response.data.resultado !== undefined) {
+        return response.data.resultado;
+      } else {
+        console.error('Respuesta inesperada de la API de conversión:', response.data);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error al convertir precio:', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    setSelectedCategory(null);
+    fetchProductos();
+    fetchCategorias();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const actualizarPreciosMostrados = async () => {
+      const productosActualizados = await Promise.all(productos.map(async (producto) => {
+        const precioOriginal = producto.precio;
+        const monedaOrigen = 'CLP';
+        const precioConvertido = await convertPrice(precioOriginal, monedaOrigen, currency);
+        return { ...producto, precioConvertido: precioConvertido !== null ? precioConvertido : precioOriginal };
+      }));
+    };
+  }, [currency, productos]);
 
   const handleAddToCart = async (productoId) => {
     console.log(`Agregar producto ${productoId} al carrito`);
@@ -99,12 +141,6 @@ const ProductosPublicos = () => {
     setSelectedCategory(categoryValue);
     fetchProductos(categoryValue);
   };
-
-  useEffect(() => {
-    setSelectedCategory(null);
-    fetchProductos();
-    fetchCategorias();
-  }, [location.pathname]);
 
   return (
     <>
@@ -211,9 +247,12 @@ const ProductosPublicos = () => {
                         {producto.descripcion}
                       </Typography>
                       <Typography variant="h6" color="text.primary" sx={{ fontWeight: 'bold' }}>
-                        ${Math.floor(producto.precio)}
+                        <RenderPrecioConvertido 
+                            precioOriginal={producto.precio} 
+                            monedaOriginal="CLP"
+                            monedaDestino={currency} 
+                        />
                       </Typography>
-
                     </CardContent>
                     <CardContent sx={{ pt: 0.5, pb: 1.5, flexGrow: 0 }}>
                       <Typography variant="body2" color="text.primary" sx={{ fontWeight: 'bold' }}>
@@ -250,13 +289,47 @@ const ProductosPublicos = () => {
       </Box>
       <Footer />
 
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)}>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}>
         <SnackbarAlert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
         </SnackbarAlert>
       </Snackbar>
     </>
   );
+};
+
+const RenderPrecioConvertido = ({ precioOriginal, monedaOriginal, monedaDestino }) => {
+    const [precioMostrado, setPrecioMostrado] = useState('Cargando...');
+
+    useEffect(() => {
+        const fetchAndSetPrice = async () => {
+            if (!precioOriginal || !monedaOriginal || !monedaDestino || monedaOriginal === monedaDestino) {
+                setPrecioMostrado(`${precioOriginal} ${monedaOriginal}`);
+                return;
+            }
+            try {
+                const response = await api.post('/convertir-moneda/', {
+                    cantidad: precioOriginal,
+                    origen: monedaOriginal,
+                    destino: monedaDestino,
+                });
+                if (response.data && response.data.resultado !== undefined) {
+                    setPrecioMostrado(`${response.data.resultado.toFixed(2)} ${monedaDestino}`);
+                } else {
+                    console.error('Respuesta inesperada al convertir precio:', response.data);
+                    setPrecioMostrado(`${precioOriginal} ${monedaOriginal}`);
+                }
+            } catch (error) {
+                console.error('Error al obtener precio convertido:', error);
+                setPrecioMostrado(`${precioOriginal} ${monedaOriginal}`);
+            }
+        };
+
+        fetchAndSetPrice();
+
+    }, [precioOriginal, monedaOriginal, monedaDestino]);
+
+    return <>{precioMostrado}</>;
 };
 
 export default ProductosPublicos; 
