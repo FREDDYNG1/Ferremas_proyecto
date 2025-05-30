@@ -33,19 +33,19 @@ const CrearUsuarioForm = () => {
 
     // Validación de contraseña
     if (formData.password.length < 8) {
-      setError('❌ La contraseña debe tener al menos 8 caracteres');
+      setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('❌ Las contraseñas no coinciden');
+      setError('Las contraseñas no coinciden');
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('❌ No hay sesión activa. Por favor, inicia sesión nuevamente.');
+        setError('No hay sesión activa. Por favor, inicia sesión nuevamente.');
         return;
       }
 
@@ -80,7 +80,7 @@ const CrearUsuarioForm = () => {
 
       console.log('Respuesta del servidor:', response.data);
 
-      setMensaje('✅ Usuario creado exitosamente');
+      setMensaje('Usuario creado exitosamente');
       setFormData({
         first_name: '',
         last_name: '',
@@ -103,9 +103,9 @@ const CrearUsuarioForm = () => {
               .map(([key, value]) => `${key}: ${value}`)
               .join(', ')
           : err.response.data;
-        setError(`❌ ${errorMessage}`);
+        setError(`${errorMessage}`);
       } else {
-        setError('❌ Error al crear el usuario. Por favor, verifica tus datos e intenta nuevamente.');
+        setError(' Error al crear el usuario. Por favor, verifica tus datos e intenta nuevamente.');
       }
     }
   };

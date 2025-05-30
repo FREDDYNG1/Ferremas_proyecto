@@ -9,8 +9,7 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { convertirMoneda } from '../../services/mondeaService'; // Ajusta la ruta si es diferente
-
+import { convertirMoneda } from '../../services/mondeaService'; 
 const ProductoCard = ({ producto, onDelete }) => {
   const navigate = useNavigate();
   const imagenUrl = producto.imagen_url || '/placeholder.png';
