@@ -1,5 +1,13 @@
+import React, { useState } from 'react';
+import Chatbot from 'react-chatbot-kit';
+import 'react-chatbot-kit/build/main.css';
+import config from '../chatbot/ChatbotConfig';
+import MessageParser from '../chatbot/MessageParser';
+import ActionProvider from '../chatbot/ActionProvider';
+
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+
 import {
   Box,
   Button,
@@ -7,12 +15,17 @@ import {
   Typography,
   Paper,
   Grid,
+  Fab,
 } from '@mui/material';
+
+import ChatIcon from '@mui/icons-material/Chat';
+import CloseIcon from '@mui/icons-material/Close';
 import ResponsiveNavbar from '../components/ResponsiveNavbar';
 
 const ClienteHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [chatVisible, setChatVisible] = useState(false);
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -63,6 +76,28 @@ const ClienteHome = () => {
           </Button>
         </Box>
       </Container>
+
+      {/* Chatbot visible si chatVisible === true */}
+      {chatVisible && (
+        <Box sx={{ position: 'fixed', bottom: 90, right: 20, zIndex: 1000 }}>
+          <Chatbot
+            config={config}
+            messageParser={MessageParser}
+            actionProvider={ActionProvider}
+          />
+        </Box>
+      )}
+
+      {/* Botón flotante circular */}
+      <Box sx={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1100 }}>
+        <Fab
+          color="secondary"
+          onClick={() => setChatVisible((prev) => !prev)}
+          aria-label="chat"
+        >
+          {chatVisible ? <CloseIcon /> : <ChatIcon />}
+        </Fab>
+      </Box>
     </Box>
   );
 };
