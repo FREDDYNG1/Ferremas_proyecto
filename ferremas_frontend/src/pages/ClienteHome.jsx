@@ -1,3 +1,4 @@
+//ferremas_frontend/src/pages/ClienteHome.jsx
 import React, { useState } from 'react';
 import Chatbot from 'react-chatbot-kit';
 import 'react-chatbot-kit/build/main.css';
