@@ -6,8 +6,7 @@ import {
   CardContent, 
   Typography, 
   CardActions, 
-  Button,
-  Box
+  Button
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 const ProductoCard = ({ producto, onDelete }) => {
   const navigate = useNavigate();
   
-  // Asegurarse de que la imagen siempre se cargue fresca
+  // Usar imagen o placeholder
   const imagenUrl = producto.imagen_url || '/placeholder.png';
 
   return (
@@ -25,7 +24,6 @@ const ProductoCard = ({ producto, onDelete }) => {
         height="200"
         image={imagenUrl}
         alt={producto.nombre}
-        // Forzar recarga de la imagen
         sx={{ objectFit: 'contain' }}
       />
       <CardContent sx={{ flexGrow: 1 }}>
@@ -38,9 +36,12 @@ const ProductoCard = ({ producto, onDelete }) => {
         <Typography variant="body2" color="text.secondary">
           Categoría: {producto.categoria}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Stock: {producto.stock}
-        </Typography>
+        {/* ✅ Mostrar cantidad si está disponible */}
+        {producto.cantidad !== undefined && (
+          <Typography variant="body2" color="text.secondary">
+            Cantidad: {producto.cantidad}
+          </Typography>
+        )}
         <Typography variant="h6" color="primary">
           ${producto.precio}
         </Typography>

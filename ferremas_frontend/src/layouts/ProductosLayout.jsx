@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { 
+import {
   AppBar, 
   Toolbar, 
   Drawer, 
@@ -11,12 +11,14 @@ import {
   ListItemButton,
   Typography,
   Box,
-  IconButton
+  IconButton,
+  Divider
 } from '@mui/material';
 import {
   Inventory as InventoryIcon,
   Add as AddIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  Warehouse as WarehouseIcon
 } from '@mui/icons-material';
 
 const ProductosLayout = () => {
@@ -68,6 +70,15 @@ const ProductosLayout = () => {
                 <ListItemText primary="Crear Producto" />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton component={Link} to="/admin/productos/gestion-stock">
+                <ListItemIcon>
+                  <WarehouseIcon />
+                </ListItemIcon>
+                <ListItemText primary="Gestión de Stock" />
+              </ListItemButton>
+            </ListItem>
+            <Divider sx={{ my: 1 }} />
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout}>
                 <ListItemIcon>

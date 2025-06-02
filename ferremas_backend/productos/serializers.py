@@ -77,3 +77,8 @@ class ProductoSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+stock_por_tienda = StockTiendaSerializer(source='stocktienda_set', many=True, read_only=True)
+stock_total = serializers.SerializerMethodField()
+
+def get_stock_total(self, obj):
+    return sum(stock.cantidad for stock in obj.stocktienda_set.all())

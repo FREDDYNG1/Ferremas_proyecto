@@ -7,6 +7,8 @@ import {
   Typography,
   CircularProgress
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { productoService } from '../../services/productoService';
 
 const ProductoForm = ({ id, onSuccess, onCancel }) => {
@@ -17,8 +19,10 @@ const ProductoForm = ({ id, onSuccess, onCancel }) => {
     precio: '',
     categoria: '',
     marca: '',
-    imagen: null
+    imagen: null,
+    cantidad: 1 // Campo de cantidad agregado
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -32,7 +36,10 @@ const ProductoForm = ({ id, onSuccess, onCancel }) => {
   const loadProducto = async () => {
     try {
       const data = await productoService.getById(id);
-      setFormData(data);
+      setFormData({
+        ...data,
+        cantidad: data.cantidad || 1
+      });
     } catch (error) {
       setError('Error al cargar el producto');
     }
@@ -43,7 +50,6 @@ const ProductoForm = ({ id, onSuccess, onCancel }) => {
     setLoading(true);
     setError(null);
 
-    // Crear una copia de formData para eliminar el campo stock si existe
     const dataToSend = { ...formData };
     if (dataToSend.hasOwnProperty('stock')) {
       delete dataToSend.stock;
@@ -55,7 +61,7 @@ const ProductoForm = ({ id, onSuccess, onCancel }) => {
       } else {
         await productoService.create(dataToSend);
       }
-      // Llama a onSuccess solo al guardar correctamente
+
       if (typeof onSuccess === 'function') {
         onSuccess();
       }
@@ -125,6 +131,54 @@ const ProductoForm = ({ id, onSuccess, onCancel }) => {
             onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
           />
         </Grid>
+
+        {/* CAMPO DE CANTIDAD */}
+        <Grid item xs={12} sm={6}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Cantidad
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  cantidad: Math.max(1, prev.cantidad - 1)
+                }))
+              }
+              sx={{ minWidth: 40 }}
+            >
+              <RemoveIcon />
+            </Button>
+
+            <TextField
+              type="number"
+              value={formData.cantidad}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  cantidad: Math.max(1, parseInt(e.target.value) || 1)
+                })
+              }
+              sx={{ mx: 1, width: 100 }}
+              inputProps={{ min: 1 }}
+            />
+
+            <Button
+              variant="outlined"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  cantidad: prev.cantidad + 1
+                }))
+              }
+              sx={{ minWidth: 40 }}
+            >
+              <AddIcon />
+            </Button>
+          </Box>
+        </Grid>
+
         <Grid item xs={12}>
           <input
             accept="image/*"
@@ -141,17 +195,10 @@ const ProductoForm = ({ id, onSuccess, onCancel }) => {
       )}
 
       <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={loading}
-        >
+        <Button type="submit" variant="contained" disabled={loading}>
           {loading ? <CircularProgress size={24} /> : 'Guardar'}
         </Button>
-        <Button
-          variant="outlined"
-          onClick={onCancel}
-        >
+        <Button variant="outlined" onClick={onCancel}>
           Cancelar
         </Button>
       </Box>

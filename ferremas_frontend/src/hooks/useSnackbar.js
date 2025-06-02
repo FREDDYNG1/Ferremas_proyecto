@@ -5,7 +5,7 @@ export const useSnackbar = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const showSnackbar = (message, severity = 'success') => {
+  const showSnackbar = (message, severity = 'success',) => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);

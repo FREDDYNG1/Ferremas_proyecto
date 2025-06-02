@@ -4,14 +4,22 @@ from rest_framework.response import Response
 from .models import Carrito, ItemCarrito
 from productos.models import Producto
 from .serializers import ItemCarritoSerializer, CarritoSerializer
-import mercadopago
-import os
+from .mercadopago_service import MercadoPagoService
+import logging
 
-# Configura tus credenciales (ideal: usa variables de entorno)
-MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN', 'APP_USR-...')  # <-- Coloca aquí tu access token de prueba
-mp = mercadopago.SDK(MP_ACCESS_TOKEN)
+logger = logging.getLogger(__name__)
 
 class CarritoViewSet(viewsets.GenericViewSet):
+    # Inicializamos el servicio de MercadoPago
+    mercadopago_service = MercadoPagoService()
+    
+    def _get_cart(self, user, guest_cart_id=None):
+        """Helper para obtener el carrito del usuario o invitado"""
+        if user.is_authenticated:
+            return Carrito.objects.filter(usuario=user).first()
+        elif guest_cart_id:
+            return Carrito.objects.filter(id=guest_cart_id, usuario__isnull=True).first()
+        return None
 
     @action(detail=False, methods=['post'])
     def add_item(self, request):
@@ -90,15 +98,12 @@ class CarritoViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['post'])
     def create_mercadopago_preference(self, request):
         guest_cart_id = request.data.get('guest_cart_id')
-        user = request.user
-        carrito = None
-        if user.is_authenticated:
-            carrito = Carrito.objects.filter(usuario=user).first()
-        elif guest_cart_id:
-            carrito = Carrito.objects.filter(id=guest_cart_id, usuario__isnull=True).first()
+        carrito = self._get_cart(request.user, guest_cart_id)
+        
         if not carrito or not carrito.items.exists():
             return Response({'error': 'El carrito está vacío'}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Convertir items del carrito al formato que espera MercadoPago
         items_mp = [{
             "title": item.producto.nombre,
             "quantity": item.cantidad,
@@ -106,41 +111,34 @@ class CarritoViewSet(viewsets.GenericViewSet):
             "currency_id": "CLP"
         } for item in carrito.items.all()]
         
-        preference_data = {
-            "items": items_mp,
-            "back_urls": {
-                "success": "http://localhost:5173/checkout/success",
-                "failure": "http://localhost:5173/checkout/failure",
-                "pending": "http://localhost:5173/checkout/pending",
-            },
-            # "auto_return": "approved",
-        }
-        preference_response = mp.preference().create(preference_data)
-        print("Mercado Pago preference response:", preference_response)
-        if (not preference_response or
-            "response" not in preference_response or
-            not preference_response["response"]):
-            print("Error: Mercado Pago response:", preference_response)
+        # Usar el servicio para crear la preferencia
+        preference = self.mercadopago_service.create_preference(items_mp)
+        
+        if not preference:
             return Response(
-                {'error': 'Error en la respuesta de Mercado Pago', 'raw': preference_response},
+                {'error': 'Error en la respuesta de Mercado Pago'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        preference = preference_response["response"]
-        return Response({
-            "preference_id": preference.get("id"),
-            "sandbox_init_point": preference.get("sandbox_init_point"),
-            "init_point": preference.get("init_point")
-        }, status=status.HTTP_200_OK)
+            
+        return Response(preference, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
     def webhook(self, request):
         payment_id = request.data.get("data", {}).get("id")
-        if payment_id:
-            payment_info = mp.payment().get(payment_id)["response"]
-            # Aquí puedes actualizar el estado de la orden/compra según payment_info["status"]
+        if not payment_id:
+            return Response({"status": "ignored"})
+            
+        # Usar el servicio para obtener información del pago
+        payment_info = self.mercadopago_service.get_payment_info(payment_id)
+        
+        if payment_info:
+            # Aquí puedes actualizar el estado de la orden según payment_info["status"]
+            # Posiblemente crear un método separado para esta lógica
             return Response({"status": "ok"})
-        return Response({"status": "ignored"})
-
+            
+        return Response({"status": "error", "message": "No se pudo obtener información del pago"}, 
+                      status=status.HTTP_400_BAD_REQUEST)
+                      
     @action(detail=False, methods=['post'])
     def update_quantity(self, request):
         item_id = request.data.get('item_id')

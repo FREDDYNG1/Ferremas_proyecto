@@ -139,3 +139,9 @@ class StockTiendaViewSet(viewsets.ModelViewSet):
                 {'error': 'La cantidad debe ser un número entero'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+@action(detail=True, methods=['get'])
+def stock_por_tienda(self, request, pk=None):
+    producto = self.get_object()
+    stock = StockTienda.objects.filter(producto=producto)
+    serializer = StockTiendaSerializer(stock, many=True)
+    return Response(serializer.data)

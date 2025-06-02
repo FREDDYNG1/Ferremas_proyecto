@@ -254,7 +254,7 @@ const ProductosPublicos = () => {
                         />
                       </Typography>
                     </CardContent>
-                    <CardContent sx={{ pt: 0.5, pb: 1.5, flexGrow: 0 }}>
+                                        <CardContent sx={{ pt: 0.5, pb: 1.5, flexGrow: 0 }}>
                       <Typography variant="body2" color="text.primary" sx={{ fontWeight: 'bold' }}>
                         Stock Total: {producto.stock_total}
                       </Typography>
@@ -263,9 +263,8 @@ const ProductosPublicos = () => {
                           <Typography variant="caption" color="text.secondary" display="block">
                             Stock por Tienda:
                           </Typography>
-                          {
-                            producto.stock_por_tienda.sort((a, b) => a.tienda_nombre.localeCompare(b.tienda_nombre)).map(stock => (
-                            <Typography key={stock.tienda.id} variant="caption" color="text.secondary" display="block" sx={{ ml: 1 }}>
+                          {producto.stock_por_tienda.map(stock => (
+                            <Typography key={stock.id} variant="caption" color="text.secondary" display="block" sx={{ ml: 1 }}>
                               - {stock.tienda_nombre}: {stock.cantidad}
                             </Typography>
                           ))}

@@ -7,6 +7,12 @@ export const productoService = {
     return response.data;
   },
 
+  // Obtener el stock por tienda de un producto
+  getStockPorTienda: async (id) => {
+    const response = await api.get(`/productos/${id}/stock_por_tienda/`);
+    return response.data;
+  },
+
   // Obtener un producto por ID
   getById: async (id) => {
     const response = await api.get(`/productos/${id}/`);

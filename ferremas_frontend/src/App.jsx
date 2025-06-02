@@ -20,6 +20,7 @@ import TrabajadoresLista from './pages/usuarios/TrabajadoresLista';
 import EditarTrabajador from './pages/usuarios/EditarTrabajador';
 import ProductosPublicos from './pages/productos/ProductosPublicos';
 import ProductosCrear from './pages/productos/ProductosCrear';
+import GestionStock from './pages/productos/GestionStock';
 import CarritoPage from './pages/carrito/CarritoPage';
 import { CarritoProvider } from './context/CarritoContext';
 
@@ -78,6 +79,7 @@ const App = () => {
             >
               <Route path="productos" element={<ProductosLista />} />
               <Route path="productos/crear" element={<ProductosCrear />} />
+              <Route path="productos/gestion-stock" element={<GestionStock />} />
               <Route
                 path="productos/editar/:id"
                 element={<ProductoEditWrapper />}
