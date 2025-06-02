@@ -1,16 +1,13 @@
+// src/chatbot/MessageParser.js
 class MessageParser {
   constructor(actionProvider) {
     this.actionProvider = actionProvider;
   }
 
   parse(message) {
-    const lower = message.toLowerCase();
-
-    if (lower.includes("producto") || lower.includes("catálogo")) {
-      this.actionProvider.handleProductoConsulta();
-    } else {
-      this.actionProvider.handleDefault();
-    }
+    // Aquí puedes agregar lógica para detectar intenciones, pero para tu caso:
+    // Simplemente pasa el mensaje al método del ActionProvider
+    this.actionProvider.handleUserMessage(message);
   }
 }
 
