@@ -73,3 +73,12 @@ def delete_file(file_url, bucket_name="productos"):
     except Exception as e:
         print(f"Error al eliminar el archivo: {str(e)}")
         return False 
+    
+# ✅ FUNCIÓN PARA EL CHATBOT
+def obtener_productos_recomendados(tarea):
+    try:
+        response = supabase.table("Producto").select("*").ilike("uso", f"%{tarea}%").execute()
+        return response.data
+    except Exception as e:
+        print(f"Error al obtener productos: {str(e)}")
+        return []
