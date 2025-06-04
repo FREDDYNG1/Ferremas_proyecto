@@ -7,7 +7,7 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-// Clave privada de OpenRouter (ocúltala en producción)
+
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 class ActionProvider {

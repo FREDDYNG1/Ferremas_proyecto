@@ -1,4 +1,5 @@
 // src/chatbot/MessageParser.js
+// Ferremas_proyecto/frontend/src/chatbot/MessageParser.js
 class MessageParser {
   constructor(actionProvider) {
     this.actionProvider = actionProvider;

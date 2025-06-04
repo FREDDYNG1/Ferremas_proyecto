@@ -1,3 +1,4 @@
+// Ferremas Frontend - Chatbot Configuration
 import { createChatBotMessage } from 'react-chatbot-kit';
 
 const botName = "Asistente FERREMAS";

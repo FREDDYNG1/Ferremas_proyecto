@@ -77,6 +77,7 @@ const ClienteHome = () => {
           </Button>
         </Box>
       </Container>
+// Chatbot integrado
 
       {/* Chatbot visible si chatVisible === true */}
       {chatVisible && (
