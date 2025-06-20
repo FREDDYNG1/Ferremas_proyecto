@@ -15,7 +15,7 @@ import {
   MenuItem,
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -97,14 +97,13 @@ const ResponsiveNavbar = () => {
       <Divider />
       <List>
         {getNavItems().map((item) => (
-          <ListItem
-            button
+          <ListItemButton
             key={item.text}
             onClick={() => navigate(item.path)}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
       <Divider sx={{ my: 2 }} />

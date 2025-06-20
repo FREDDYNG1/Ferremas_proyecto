@@ -61,11 +61,59 @@ class ProductoViewSet(viewsets.ModelViewSet):
 class TiendaViewSet(viewsets.ModelViewSet):
     queryset = Tienda.objects.all()
     serializer_class = TiendaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        Permite el acceso sin autenticación para listar y ver detalles de tiendas.
+        Requiere autenticación y rol de administrador para crear, actualizar o eliminar.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [permissions.AllowAny]
+        else:
+            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+        return [permission() for permission in permission_classes]
+
+    def create(self, request, *args, **kwargs):
+        """
+        Crea una nueva tienda.
+        Solo usuarios administradores pueden crear tiendas.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Actualiza una tienda existente.
+        Solo usuarios administradores pueden actualizar tiendas.
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Elimina una tienda.
+        Solo usuarios administradores pueden eliminar tiendas.
+        """
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'])
     def stock(self, request, pk=None):
+        """
+        Obtiene el stock de productos para una tienda específica.
+        Accesible sin autenticación.
+        """
         tienda = self.get_object()
-        stock = StockTienda.objects.filter(tienda=tienda)
+        stock = StockTienda.objects.filter(tienda=tienda).select_related('producto')
         serializer = StockTiendaSerializer(stock, many=True)
         return Response(serializer.data)
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -34,6 +34,7 @@ const SnackbarAlert = React.forwardRef(function SnackbarAlert(
 
 const ProductosPublicos = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -132,8 +133,18 @@ const ProductosPublicos = () => {
   };
 
   const handleBuyNow = (productoId) => {
-    console.log(`Comprar producto ${productoId} ahora`);
-    alert('Funcionalidad de comprar ahora no implementada aún.');
+    agregarItem(productoId, 1).then(() => {
+      navigate('/carrito');
+    }).catch(error => {
+      console.error('Error al agregar producto para compra directa:', error);
+      let errorMessage = 'Error al procesar la compra. Inténtalo de nuevo.';
+      if (error.response && error.response.status === 401) {
+        errorMessage = 'Debes iniciar sesión para comprar productos.';
+      }
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    });
   };
 
   const handleCategoryClick = (categoria) => {

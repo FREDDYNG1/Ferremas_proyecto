@@ -50,7 +50,7 @@ def convertir_moneda(cantidad, moneda_origen, moneda_destino):
     datos_tasas = obtener_tasas_cambio(moneda_base=moneda_origen)
 
     if not datos_tasas or 'conversion_rates' not in datos_tasas:
-        # El mensaje de error más específico ya debería haberse impreso en obtener_tasas_cambio
+        
         print("Error: Falló la obtención de tasas o el formato es incorrecto para la conversión.")
         return None
 
@@ -59,7 +59,6 @@ def convertir_moneda(cantidad, moneda_origen, moneda_destino):
     # Verificamos que las monedas de destino estén disponibles en las tasas
     if moneda_destino not in tasas_disponibles:
         print(f"Error: La moneda de destino '{moneda_destino}' no está disponible en las tasas obtenidas para la moneda base '{moneda_origen}'.")
-        # Considera loggear las tasas disponibles en producción si esto ocurre
         return None
 
     try:

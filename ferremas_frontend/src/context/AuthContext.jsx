@@ -1,5 +1,6 @@
 // src/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import api from '../utils/axiosConfig';
 
 const AuthContext = createContext(null);
@@ -25,12 +26,19 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      // Usar el endpoint de login personalizado
       const response = await api.post('/usuarios/login/', {
         email,
         password,
       });
 
-      const { access, role, user_id } = response.data;
+      const { access, refresh, user } = response.data;
+      
+      // Configurar axios para futuras peticiones
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+      
+      // Extraer el rol y el ID del usuario de la respuesta
+      const { role, id: user_id } = user || {};
 
       // Guardar en localStorage
       localStorage.setItem('token', access);

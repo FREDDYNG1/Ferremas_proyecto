@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import CustomerUser
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated
 
 class CrearUsuarioPorAdminSerializer(serializers.ModelSerializer):
     rol = serializers.CharField(write_only=True)
@@ -44,10 +46,14 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = CustomerUser
         fields = [
             'id', 'username', 'first_name', 'last_name', 'email', 'password',
-            'direccion', 'comuna', 'ciudad', 'telefono', 'role'
+            'direccion', 'comuna', 'ciudad', 'telefono'
         ]
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'comuna': {'required': False, 'allow_blank': True},
+            'ciudad': {'required': False, 'allow_blank': True},
+            'direccion': {'required': False, 'allow_blank': True},
+            'telefono': {'required': False, 'allow_blank': True}
         }
 
     def create(self, validated_data):
@@ -59,13 +65,24 @@ class UsuarioSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             email=email,
-            direccion=validated_data['direccion'],
-            comuna=validated_data['comuna'],
-            ciudad=validated_data['ciudad'],
-            telefono=validated_data['telefono'],
+            direccion=validated_data.get('direccion', ''),
+            comuna=validated_data.get('comuna', ''),
+            ciudad=validated_data.get('ciudad', ''),
+            telefono=validated_data.get('telefono', ''),
             role='cliente',
             is_active=True
         )
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
+class CrearUsuarioPorAdminAPIView(CreateAPIView):
+    queryset = CustomerUser.objects.all()
+    serializer_class = CrearUsuarioPorAdminSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class RegistroUsuarioAPIView(CreateAPIView):
+    queryset = CustomerUser.objects.all()
+    serializer_class = UsuarioSerializer

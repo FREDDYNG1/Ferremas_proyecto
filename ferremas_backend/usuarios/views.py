@@ -7,10 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import CustomerUser
 from .serializers import UsuarioSerializer, CrearUsuarioPorAdminSerializer
-
-class EsAdministrador(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'admin'
+from .permissions import EsAdministrador
 
 class RegistroUsuarioAPIView(generics.CreateAPIView):
     queryset = CustomerUser.objects.all()
@@ -122,3 +119,10 @@ class VistaProtegidaAPIView(APIView):
             "usuario": request.user.email,
             "rol": request.user.role
         })
+
+class PerfilUsuarioAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UsuarioSerializer(request.user)
+        return Response(serializer.data)

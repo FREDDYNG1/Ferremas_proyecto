@@ -3,7 +3,7 @@ from .views import (
     VistaProtegidaAPIView, CrearUsuarioPorAdminAPIView,
     CambiarPasswordAPIView, UsuarioListView,
     EditarTrabajadorAPIView, EliminarTrabajadorAPIView,
-    DetalleTrabajadorAPIView
+    DetalleTrabajadorAPIView, PerfilUsuarioAPIView
 )
 from django.urls import path
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('protegido/', VistaProtegidaAPIView.as_view(), name='protegido'),
     path('crear-usuario/', CrearUsuarioPorAdminAPIView.as_view(), name='crear_usuario'),
     path('cambiar-password/', CambiarPasswordAPIView.as_view(), name='cambiar_password'),
+    path('perfil/', PerfilUsuarioAPIView.as_view(), name='perfil_usuario'),
     path('', UsuarioListView.as_view(), name='lista_usuarios'),
     path('trabajador/<int:id>/', DetalleTrabajadorAPIView.as_view(), name='detalle_trabajador'),
     path('trabajador/<int:id>/editar/', EditarTrabajadorAPIView.as_view(), name='editar_trabajador'),
