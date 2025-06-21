@@ -32,13 +32,14 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
-      const { access, refresh, user } = response.data;
+      console.log('Respuesta del backend:', response.data); // Log de depuración
+
+      const { access, refresh, role, user_id } = response.data;
+      
+      console.log('Datos extraídos:', { access, role, user_id }); // Log de depuración
       
       // Configurar axios para futuras peticiones
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-      
-      // Extraer el rol y el ID del usuario de la respuesta
-      const { role, id: user_id } = user || {};
 
       // Guardar en localStorage
       localStorage.setItem('token', access);
@@ -48,8 +49,11 @@ export const AuthProvider = ({ children }) => {
       // Actualizar estado
       setUser({ token: access, role, user_id });
 
+      console.log('Usuario guardado en estado:', { token: access, role, user_id }); // Log de depuración
+
       return { success: true, role };
     } catch (error) {
+      console.error('Error en login:', error); // Log de depuración
       if (error.response) {
         // El servidor respondió con un código de error
         throw new Error(error.response.data.detail || 'Error al iniciar sesión');

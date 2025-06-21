@@ -5,20 +5,23 @@ export const useMercadoPago = () => {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [error, setError] = useState(null);
 
-  const iniciarPago = async () => {
+  const iniciarPago = async (shippingData) => {
     try {
       setIsCheckingOut(true);
       setError(null);
 
       const guestCartId = localStorage.getItem('guest_cart_id');
-      if (!guestCartId) {
-        throw new Error('No se encontró el carrito');
-      }
+      const token = localStorage.getItem('access_token');
 
       const response = await api.post('/carritos/create_mercadopago_preference/', {
-        guest_cart_id: guestCartId
+        guest_cart_id: guestCartId,
+        ...shippingData
+      }, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : ''
+        }
       });
-
+      
       const preferenceData = response.data;
 
       if (preferenceData && preferenceData.sandbox_init_point) {
@@ -37,7 +40,16 @@ export const useMercadoPago = () => {
         throw new Error('No se recibió la URL de pago de Mercado Pago');
       }
     } catch (error) {
-      setError(error.response?.data?.error || error.message || 'Error al procesar el pago');
+      if (error.response && error.response.data) {
+        // Manejar errores de validación del backend
+        const backendErrors = error.response.data;
+        const errorMessages = Object.entries(backendErrors).map(([field, messages]) => 
+          `${field}: ${messages.join(', ')}`
+        ).join('; ');
+        setError(errorMessages);
+      } else {
+        setError(error.message || 'Error al procesar el pago');
+      }
       throw error;
     } finally {
       setIsCheckingOut(false);

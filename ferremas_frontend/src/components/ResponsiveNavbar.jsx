@@ -32,9 +32,11 @@ import {
   Inventory,
   Assessment,
   Home,
+  Email,
 } from '@mui/icons-material';
 import { useCarrito } from '../context/CarritoContext';
 import { useCurrency } from '../context/CurrencyContext';
+import ContactNotification from './ContactNotification';
 
 const ResponsiveNavbar = () => {
   const { user, logout } = useAuth();
@@ -69,20 +71,25 @@ const ResponsiveNavbar = () => {
   };
 
   const getNavItems = () => {
-    const items = [
-      { text: 'Inicio', icon: <Home />, path: '/' },
-    ];
+    let items = [{ text: 'Inicio', icon: <Home />, path: '/' }];
+
+    if (!user || user.role === 'cliente') {
+      items.push({ text: 'Productos', icon: <ShoppingCart />, path: '/productos' });
+      items.push({ text: 'Contacto', icon: <Email />, path: '/contacto' });
+    }
 
     if (user?.role === 'cliente') {
-      items.push(
-        { text: 'Catálogo', icon: <ShoppingCart />, path: '/productos' },
-        { text: 'Mis Pedidos', icon: <Inventory />, path: '/pedidos' }
-      );
+      items.push({ text: 'Mis Pedidos', icon: <Inventory />, path: '/pedidos' });
     } else if (user?.role === 'trabajador') {
       items.push(
-        { text: 'Inventario', icon: <Inventory />, path: '/inventario' },
-        { text: 'Ventas', icon: <ShoppingCart />, path: '/ventas' },
-        { text: 'Reportes', icon: <Assessment />, path: '/reportes' }
+        { text: 'Inventario', icon: <Inventory />, path: '/admin/productos' },
+        { text: 'Mensajes', icon: <Email />, path: '/admin/mensajes' }
+      );
+    } else if (user?.role === 'admin') {
+      items.push(
+        { text: 'Inventario', icon: <Inventory />, path: '/admin/productos' },
+        { text: 'Usuarios', icon: <Person />, path: '/admin/usuarios/trabajadores' },
+        { text: 'Mensajes', icon: <Email />, path: '/admin/mensajes' }
       );
     }
 
@@ -165,7 +172,7 @@ const ResponsiveNavbar = () => {
 
             <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', mr: 2 }}>
                <FormControl variant="outlined" size="small" sx={{ minWidth: 80 }}>
-                <InputLabel id="currency-select-label-desktop">Moneda</InputLabel>
+                <InputLabel id="currency-select-label-desktop" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Moneda</InputLabel>
                 <Select
                   labelId="currency-select-label-desktop"
                   id="currency-select-desktop"
@@ -182,17 +189,23 @@ const ResponsiveNavbar = () => {
             </Box>
 
             <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center' }}>
-              <Tooltip title="Ver Carrito">
-                <IconButton 
-                  onClick={() => navigate('/carrito')}
-                  color="inherit"
-                  sx={{ mr: 1 }}
-                >
-                  <Badge badgeContent={totalItems} color="error">
-                    <ShoppingCart />
-                  </Badge>
-                </IconButton>
-              </Tooltip>
+              {/* Notificación de mensajes para admin/trabajador */}
+              <ContactNotification />
+
+              {/* Carrito para clientes */}
+              {user?.role === 'cliente' && (
+                <Tooltip title="Ver carrito">
+                  <IconButton
+                    color="inherit"
+                    onClick={() => navigate('/carrito')}
+                    sx={{ mr: 1 }}
+                  >
+                    <Badge badgeContent={totalItems} color="error">
+                      <ShoppingCart />
+                    </Badge>
+                  </IconButton>
+                </Tooltip>
+              )}
 
               {user ? (
                 <Box sx={{ flexGrow: 0 }}>
@@ -291,21 +304,22 @@ const ResponsiveNavbar = () => {
         </Container>
       </AppBar>
 
-      <Drawer
-        variant="temporary"
-        anchor="left"
-        open={mobileOpen}
-        onClose={handleDrawerToggle}
-        ModalProps={{
-          keepMounted: true,
-        }}
-        sx={{
-          display: { xs: 'block', sm: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
-        }}
-      >
-        {drawer}
-      </Drawer>
+      <nav>
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
+          }}
+        >
+          {drawer}
+        </Drawer>
+      </nav>
     </Box>
   );
 };

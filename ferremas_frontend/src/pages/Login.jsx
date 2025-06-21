@@ -29,16 +29,26 @@ const Login = () => {
     setError('');
 
     try {
+      console.log('Iniciando login con:', { email, password });
+      
       const { role } = await login(email, password);
+      
+      console.log('Login exitoso, rol recibido:', role);
 
       if (role === 'admin') {
+        console.log('Redirigiendo a /admin');
         navigate('/admin');
       } else if (role === 'cliente') {
+        console.log('Redirigiendo a /cliente');
         navigate('/cliente');
       } else if (role === 'trabajador') {
+        console.log('Redirigiendo a /trabajador');
         navigate('/trabajador');
+      } else {
+        console.log('Rol no reconocido:', role);
       }
     } catch (err) {
+      console.error('Error en handleLogin:', err);
       if (err.response) {
         setError(err.response.data.detail || 'Error al iniciar sesión');
       } else if (err.request) {

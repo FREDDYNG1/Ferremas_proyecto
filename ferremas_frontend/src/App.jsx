@@ -11,6 +11,7 @@ import TrabajadorHome from './pages/TrabajadorHome';
 import PrivateRoute from './components/PrivateRoute';
 import CambiarPassword from './pages/CambiarPassword';
 import RegistroCliente from './pages/RegistroCliente';
+import Contacto from './pages/Contacto';
 import Footer from './components/Footer';
 import ProductosLayout from './layouts/ProductosLayout';
 import ProductosLista from './pages/productos/ProductosLista';
@@ -21,7 +22,11 @@ import EditarTrabajador from './pages/usuarios/EditarTrabajador';
 import ProductosPublicos from './pages/productos/ProductosPublicos';
 import ProductosCrear from './pages/productos/ProductosCrear';
 import GestionStock from './pages/productos/GestionStock';
+import GestionMensajes from './pages/admin/GestionMensajes';
 import CarritoPage from './pages/carrito/CarritoPage';
+import OrderConfirmation from './pages/checkout/OrderConfirmation';
+import PaymentFailure from './pages/checkout/PaymentFailure';
+import PaymentPending from './pages/checkout/PaymentPending';
 import { CarritoProvider } from './context/CarritoContext';
 
 const App = () => {
@@ -34,8 +39,14 @@ const App = () => {
             <Route path="/" element={<ProductosPublicos />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<RegistroCliente />} />
+            <Route path="/contacto" element={<Contacto />} />
             <Route path="/productos" element={<ProductosPublicos />} />
             <Route path="/carrito" element={<CarritoPage />} />
+            
+            {/* Rutas de checkout */}
+            <Route path="/checkout/success" element={<OrderConfirmation />} />
+            <Route path="/checkout/failure" element={<PaymentFailure />} />
+            <Route path="/checkout/pending" element={<PaymentPending />} />
 
             <Route
               path="/admin"
@@ -70,18 +81,26 @@ const App = () => {
               }
             />
             <Route
-              path="/admin"
+              path="/admin/mensajes"
+              element={
+                <PrivateRoute requiredRoles={['admin', 'trabajador']}>
+                  <GestionMensajes />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/productos"
               element={
                 <PrivateRoute requiredRoles={['admin', 'trabajador']}>
                   <ProductosLayout />
                 </PrivateRoute>
               }
             >
-              <Route path="productos" element={<ProductosLista />} />
-              <Route path="productos/crear" element={<ProductosCrear />} />
-              <Route path="productos/gestion-stock" element={<GestionStock />} />
+              <Route index element={<ProductosLista />} />
+              <Route path="crear" element={<ProductosCrear />} />
+              <Route path="gestion-stock" element={<GestionStock />} />
               <Route
-                path="productos/editar/:id"
+                path="editar/:id"
                 element={<ProductoEditWrapper />}
               />
             </Route>
