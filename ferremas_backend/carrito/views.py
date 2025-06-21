@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Carrito, ItemCarrito
+from .models import Carrito, ItemCarrito, Orden, ItemOrden
 from productos.models import Producto
 from .serializers import ItemCarritoSerializer, CarritoSerializer
 from .mercadopago_service import MercadoPagoService
@@ -59,27 +59,36 @@ class CarritoViewSet(viewsets.GenericViewSet):
         guest_cart_id = request.data.get('guest_cart_id')
         user = request.user
 
+        logger.info(f"remove_item - item_id: {item_id}, guest_cart_id: {guest_cart_id}, user_authenticated: {user.is_authenticated}")
+
         try:
             # Obtener el item del carrito
             item = ItemCarrito.objects.get(id=item_id)
             
+            logger.info(f"Item encontrado - carrito_id: {item.carrito.id}, carrito_usuario: {item.carrito.usuario}")
+            
             # Verificar que el usuario tenga permiso para eliminar el item
             if user.is_authenticated:
                 if item.carrito.usuario != user:
+                    logger.warning(f"Usuario autenticado no coincide - item.carrito.usuario: {item.carrito.usuario}, request.user: {user}")
                     return Response({'error': 'No tienes permiso para eliminar este item'}, status=status.HTTP_403_FORBIDDEN)
             else:
+                logger.info(f"Comparando carrito IDs - item.carrito.id: {item.carrito.id} (type: {type(item.carrito.id)}), guest_cart_id: {guest_cart_id} (type: {type(guest_cart_id)})")
                 if str(item.carrito.id) != guest_cart_id:
+                    logger.warning(f"Guest cart ID no coincide - item.carrito.id: {item.carrito.id}, guest_cart_id: {guest_cart_id}")
                     return Response({'error': 'No tienes permiso para eliminar este item'}, status=status.HTTP_403_FORBIDDEN)
 
             # Eliminar el item
             item.delete()
+            logger.info(f"Item {item_id} eliminado exitosamente")
             
             return Response({'message': 'Item eliminado exitosamente'}, status=status.HTTP_200_OK)
             
         except ItemCarrito.DoesNotExist:
+            logger.error(f"Item {item_id} no encontrado")
             return Response({'error': 'Item no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            print(f"Error al eliminar item: {e}")
+            logger.error(f"Error al eliminar item: {e}")
             return Response({'error': 'Error al eliminar el item'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
@@ -154,7 +163,7 @@ class CarritoViewSet(viewsets.GenericViewSet):
             #     return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
             # elif not request.user.is_authenticated:
             #     guest_cart_id = request.data.get('guest_cart_id') # Need to pass guest_cart_id from frontend
-            #     if not guest_cart_id or str(item.carrito.id) != guest_cart_id:
+            #     if str(item.carrito.id) != guest_cart_id:
             #          return Response({'error': 'Not authorized or invalid cart'}, status=status.HTTP_403_FORBIDDEN)
 
 
@@ -172,3 +181,68 @@ class CarritoViewSet(viewsets.GenericViewSet):
              # Log the error for debugging
             print(f"Error updating item quantity: {e}")
             return Response({'error': 'An error occurred while updating quantity'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def get_order_details(self, request):
+        """Obtener detalles de una orden específica"""
+        payment_id = request.query_params.get('payment_id')
+        external_reference = request.query_params.get('external_reference')
+        
+        if not payment_id and not external_reference:
+            return Response(
+                {'error': 'Se requiere payment_id o external_reference'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Buscar la orden por payment_id o external_reference
+            if payment_id:
+                orden = Orden.objects.get(payment_id=payment_id)
+            else:
+                orden = Orden.objects.get(id=external_reference)
+            
+            # Obtener los items de la orden
+            items_orden = ItemOrden.objects.filter(orden=orden)
+            
+            # Preparar los datos de respuesta
+            order_data = {
+                'orderId': str(orden.id),
+                'paymentId': orden.payment_id,
+                'status': orden.estado,
+                'total': float(orden.total),
+                'fechaCreacion': orden.fecha_creacion.strftime('%d/%m/%Y'),
+                'fechaEstimadaEntrega': (orden.fecha_creacion.replace(day=orden.fecha_creacion.day + 7)).strftime('%d/%m/%Y'),
+                'items': [
+                    {
+                        'id': item.id,
+                        'nombre': item.producto.nombre,
+                        'cantidad': item.cantidad,
+                        'precio': float(item.precio_unitario),
+                        'imagen': item.producto.imagen_url or 'https://via.placeholder.com/50'
+                    } for item in items_orden
+                ],
+                'customerInfo': {
+                    'nombre': orden.nombre,
+                    'email': orden.email,
+                    'telefono': orden.telefono
+                },
+                'shippingInfo': {
+                    'direccion': orden.direccion,
+                    'ciudad': orden.ciudad,
+                    'codigoPostal': orden.codigo_postal
+                }
+            }
+            
+            return Response(order_data, status=status.HTTP_200_OK)
+            
+        except Orden.DoesNotExist:
+            return Response(
+                {'error': 'Orden no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error al obtener detalles de orden: {e}")
+            return Response(
+                {'error': 'Error interno del servidor'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

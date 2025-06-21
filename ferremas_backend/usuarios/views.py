@@ -4,14 +4,26 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+import logging
 
 from .models import CustomerUser
 from .serializers import UsuarioSerializer, CrearUsuarioPorAdminSerializer
 from .permissions import EsAdministrador
 
+logger = logging.getLogger(__name__)
+
 class RegistroUsuarioAPIView(generics.CreateAPIView):
     queryset = CustomerUser.objects.all()
     serializer_class = UsuarioSerializer
+    
+    def create(self, request, *args, **kwargs):
+        logger.info(f"Datos recibidos en registro: {request.data}")
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error en registro de usuario: {str(e)}")
+            logger.error(f"Tipo de error: {type(e).__name__}")
+            raise
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = 'email'

@@ -49,6 +49,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'direccion', 'comuna', 'ciudad', 'telefono'
         ]
         extra_kwargs = {
+            'username': {'read_only': True},
             'password': {'write_only': True},
             'comuna': {'required': False, 'allow_blank': True},
             'ciudad': {'required': False, 'allow_blank': True},
