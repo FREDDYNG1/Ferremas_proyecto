@@ -27,6 +27,7 @@ import CarritoPage from './pages/carrito/CarritoPage';
 import OrderConfirmation from './pages/checkout/OrderConfirmation';
 import PaymentFailure from './pages/checkout/PaymentFailure';
 import PaymentPending from './pages/checkout/PaymentPending';
+import MisOrdenes from './pages/cliente/MisOrdenes';
 import { CarritoProvider } from './context/CarritoContext';
 
 const App = () => {
@@ -110,6 +111,14 @@ const App = () => {
               element={
                 <PrivateRoute requiredRole="cliente">
                   <ClienteHome />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/cliente/mis-ordenes"
+              element={
+                <PrivateRoute requiredRole="cliente">
+                  <MisOrdenes />
                 </PrivateRoute>
               }
             />

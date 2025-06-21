@@ -20,6 +20,8 @@ import {
 
 import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import HistoryIcon from '@mui/icons-material/History';
 import ResponsiveNavbar from '../components/ResponsiveNavbar';
 
 const ClienteHome = () => {
@@ -47,9 +49,17 @@ const ClienteHome = () => {
               <Typography variant="h6" gutterBottom>
                 Mis Pedidos Recientes
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                No tienes pedidos recientes.
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Revisa el estado de tus compras y el historial de pedidos.
               </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<HistoryIcon />}
+                onClick={() => navigate('/cliente/mis-ordenes')}
+                fullWidth
+              >
+                Ver Historial de Pedidos
+              </Button>
             </Paper>
           </Grid>
 
@@ -58,21 +68,39 @@ const ClienteHome = () => {
               <Typography variant="h6" gutterBottom>
                 Productos Favoritos
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" paragraph>
                 No tienes productos favoritos.
               </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<ShoppingCartIcon />}
+                onClick={() => navigate('/productos')}
+                fullWidth
+              >
+                Explorar Productos
+              </Button>
             </Paper>
           </Grid>
         </Grid>
 
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
           <Button
             variant="contained"
             color="primary"
             size="large"
+            startIcon={<ShoppingCartIcon />}
             onClick={() => navigate('/productos')}
           >
             Ver Catálogo
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="large"
+            startIcon={<HistoryIcon />}
+            onClick={() => navigate('/cliente/mis-ordenes')}
+          >
+            Mis Pedidos
           </Button>
         </Box>
       </Container>

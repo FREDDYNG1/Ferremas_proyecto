@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -17,9 +17,11 @@ import Footer from '../../components/Footer';
 import CarritoItem from '../../components/Carrito/CarritoItem';
 import { useCarrito } from '../../context/CarritoContext';
 import { useMercadoPago } from '../../hooks/useMercadoPago';
+import { useSimulatedPayment } from '../../hooks/useSimulatedPayment';
 import { useSnackbar } from '../../hooks/useSnackbar';
 import { CARRITO_MESSAGES } from '../../constants/messages';
 import CheckoutForm from '../../components/Checkout/CheckoutForm';
+import PaymentMethodSelector from '../../components/Checkout/PaymentMethodSelector';
 
 const SnackbarAlert = React.forwardRef(function SnackbarAlert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -28,6 +30,7 @@ const SnackbarAlert = React.forwardRef(function SnackbarAlert(props, ref) {
 const CarritoPage = () => {
   const { carrito, loadingCarrito, errorCarrito, eliminarItem, actualizarCantidad } = useCarrito();
   const { isCheckingOut, error: mpError, iniciarPago, verificarEstadoPago } = useMercadoPago();
+  const { isProcessing, error: simError, processSimulatedPayment } = useSimulatedPayment();
   const {
     snackbarOpen,
     snackbarMessage,
@@ -36,6 +39,7 @@ const CarritoPage = () => {
     hideSnackbar
   } = useSnackbar();
 
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('mercadopago');
   const checkoutFormRef = useRef(null);
 
   const handleRemoveItem = async (itemId) => {
@@ -63,10 +67,19 @@ const CarritoPage = () => {
 
   const handleShippingFormSubmit = async (shippingData) => {
     console.log('Datos de envío capturados:', shippingData);
+    console.log('Método de pago seleccionado:', selectedPaymentMethod);
+    
     try {
-      await iniciarPago(shippingData);
+      if (selectedPaymentMethod === 'mercadopago') {
+        await iniciarPago(shippingData);
+      } else if (selectedPaymentMethod === 'simulated') {
+        await processSimulatedPayment(shippingData);
+      }
     } catch (error) {
-      showSnackbar(mpError || CARRITO_MESSAGES.ERROR_MERCADO_PAGO, 'error');
+      const errorMessage = selectedPaymentMethod === 'mercadopago' 
+        ? (mpError || CARRITO_MESSAGES.ERROR_MERCADO_PAGO)
+        : (simError || 'Error al procesar el pago simulado');
+      showSnackbar(errorMessage, 'error');
     }
   };
 
@@ -98,6 +111,7 @@ const CarritoPage = () => {
   };
 
   const totalCarrito = calculateTotal();
+  const isProcessingPayment = isCheckingOut || isProcessing;
 
   return (
     <>
@@ -108,38 +122,48 @@ const CarritoPage = () => {
         </Typography>
 
         {loadingCarrito ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
             <CircularProgress />
           </Box>
         ) : errorCarrito ? (
-          <Box sx={{ mt: 4 }}>
-            <Alert severity="error">{errorCarrito}</Alert>
-          </Box>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {errorCarrito}
+          </Alert>
         ) : carrito && carrito.items && carrito.items.length > 0 ? (
-          <Grid container spacing={4}>
-            {/* Columna izquierda: Formulario */}
-            <Grid item xs={12} md={6}>
-              <CheckoutForm ref={checkoutFormRef} onSubmit={handleShippingFormSubmit} />
+          <Grid container spacing={3}>
+            <Grid item xs={12} lg={8}>
+              {/* Formulario de envío */}
+              <CheckoutForm
+                ref={checkoutFormRef}
+                onSubmit={handleShippingFormSubmit}
+                loading={isProcessingPayment}
+                error={mpError || simError}
+              />
+
+              {/* Selector de método de pago */}
+              <PaymentMethodSelector
+                selectedMethod={selectedPaymentMethod}
+                onMethodChange={setSelectedPaymentMethod}
+              />
+
+              {/* Lista de productos */}
+              <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Productos en el Carrito
+                </Typography>
+                {carrito.items.map((item) => (
+                  <CarritoItem
+                    key={item.id}
+                    item={item}
+                    onRemove={handleRemoveItem}
+                    onQuantityChange={handleQuantityChange}
+                  />
+                ))}
+              </Paper>
             </Grid>
 
-            {/* Columna derecha: Carrito + Resumen + Botón */}
-            <Grid item xs={12} md={6}>
-              <Box display="flex" flexDirection="column" gap={2}>
-                {/* Productos */}
-                <Paper elevation={2} sx={{ p: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Productos
-                  </Typography>
-                  {carrito.items.map((item) => (
-                    <CarritoItem
-                      key={item.id}
-                      item={item}
-                      onUpdateQuantity={handleQuantityChange}
-                      onRemove={handleRemoveItem}
-                    />
-                  ))}
-                </Paper>
-
+            <Grid item xs={12} lg={4}>
+              <Box position="sticky" top="100px">
                 {/* Resumen del pedido */}
                 <Paper elevation={2} sx={{ p: 2 }}>
                   <Typography variant="h6" gutterBottom>
@@ -164,11 +188,11 @@ const CarritoPage = () => {
                       variant="contained"
                       color="success"
                       onClick={handleProceedToCheckout}
-                      disabled={isCheckingOut}
+                      disabled={isProcessingPayment}
                       startIcon={<PaymentIcon />}
                       sx={{ px: 5 }}
                     >
-                      {isCheckingOut ? (
+                      {isProcessingPayment ? (
                         <>
                           <CircularProgress size={24} sx={{ mr: 1 }} />
                           Procesando...
@@ -191,12 +215,13 @@ const CarritoPage = () => {
 
       <Footer />
 
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={hideSnackbar}>
-        <SnackbarAlert
-          onClose={hideSnackbar}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={hideSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <SnackbarAlert onClose={hideSnackbar} severity={snackbarSeverity}>
           {snackbarMessage}
         </SnackbarAlert>
       </Snackbar>

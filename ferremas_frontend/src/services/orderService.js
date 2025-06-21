@@ -1,28 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000/api';
-
-// Configurar axios con interceptores para manejar tokens
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor para agregar el token de autenticación
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import api from '../utils/axiosConfig';
 
 export const orderService = {
   /**
@@ -37,7 +13,7 @@ export const orderService = {
       if (paymentId) params.append('payment_id', paymentId);
       if (externalReference) params.append('external_reference', externalReference);
       
-      const response = await apiClient.get(`/carrito/get_order_details/?${params}`);
+      const response = await api.get(`/carritos/get_order_details/?${params}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching order details:', error);
@@ -51,7 +27,7 @@ export const orderService = {
    */
   getUserOrders: async () => {
     try {
-      const response = await apiClient.get('/carrito/user_orders/');
+      const response = await api.get('/carritos/user_orders/');
       return response.data;
     } catch (error) {
       console.error('Error fetching user orders:', error);
@@ -66,7 +42,7 @@ export const orderService = {
    */
   createOrder: async (orderData) => {
     try {
-      const response = await apiClient.post('/carrito/create_order/', orderData);
+      const response = await api.post('/carritos/create_order/', orderData);
       return response.data;
     } catch (error) {
       console.error('Error creating order:', error);
@@ -82,7 +58,7 @@ export const orderService = {
    */
   updateOrderStatus: async (orderId, status) => {
     try {
-      const response = await apiClient.patch(`/carrito/orders/${orderId}/status/`, {
+      const response = await api.patch(`/carritos/orders/${orderId}/status/`, {
         status: status
       });
       return response.data;
@@ -99,7 +75,7 @@ export const orderService = {
    */
   getOrderById: async (orderId) => {
     try {
-      const response = await apiClient.get(`/carrito/orders/${orderId}/`);
+      const response = await api.get(`/carritos/orders/${orderId}/`);
       return response.data;
     } catch (error) {
       console.error('Error fetching order by ID:', error);

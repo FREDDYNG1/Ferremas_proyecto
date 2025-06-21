@@ -192,8 +192,8 @@ const ResponsiveNavbar = () => {
               {/* Notificación de mensajes para admin/trabajador */}
               <ContactNotification />
 
-              {/* Carrito para clientes */}
-              {user?.role === 'cliente' && (
+              {/* Carrito para clientes e invitados */}
+              {(!user || user.role === 'cliente') && (
                 <Tooltip title="Ver carrito">
                   <IconButton
                     color="inherit"

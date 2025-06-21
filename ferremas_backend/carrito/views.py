@@ -2,10 +2,14 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Carrito, ItemCarrito, Orden, ItemOrden
-from productos.models import Producto
+from productos.models import Producto, StockTienda
 from .serializers import ItemCarritoSerializer, CarritoSerializer
 from .mercadopago_service import MercadoPagoService
 import logging
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from usuarios.models import CustomerUser
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -107,11 +111,19 @@ class CarritoViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['post'])
     def create_mercadopago_preference(self, request):
         guest_cart_id = request.data.get('guest_cart_id')
-        carrito = self._get_cart(request.user, guest_cart_id)
+        user = request.user
+        carrito = self._get_cart(user, guest_cart_id)
         
         if not carrito or not carrito.items.exists():
             return Response({'error': 'El carrito está vacío'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Crear metadata para asociar el pago con el carrito y el usuario
+        metadata = {
+            "cart_id": str(carrito.id),
+        }
+        if user.is_authenticated:
+            metadata["user_id"] = user.id
+
         # Convertir items del carrito al formato que espera MercadoPago
         items_mp = [{
             "title": item.producto.nombre,
@@ -120,8 +132,8 @@ class CarritoViewSet(viewsets.GenericViewSet):
             "currency_id": "CLP"
         } for item in carrito.items.all()]
         
-        # Usar el servicio para crear la preferencia
-        preference = self.mercadopago_service.create_preference(items_mp)
+        # Usar el servicio para crear la preferencia, pasando la metadata
+        preference = self.mercadopago_service.create_preference(items_mp, metadata)
         
         if not preference:
             return Response(
@@ -132,22 +144,179 @@ class CarritoViewSet(viewsets.GenericViewSet):
         return Response(preference, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'])
+    @transaction.atomic
     def webhook(self, request):
+        """
+        Webhook para procesar notificaciones de MercadoPago.
+        Crea la orden, vacía el carrito y actualiza el stock si el pago es aprobado.
+        """
+        logger.info(f"Webhook de MercadoPago recibido: {request.data}")
+        
+        topic = request.data.get("topic")
+        if topic != "payment":
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         payment_id = request.data.get("data", {}).get("id")
         if not payment_id:
-            return Response({"status": "ignored"})
+            logger.warning("Webhook no contiene ID de pago.")
+            return Response({"status": "ignored", "reason": "no payment id"}, status=status.HTTP_400_BAD_REQUEST)
             
-        # Usar el servicio para obtener información del pago
-        payment_info = self.mercadopago_service.get_payment_info(payment_id)
+        try:
+            payment_info = self.mercadopago_service.get_payment_info(payment_id)
+            if not payment_info:
+                logger.error(f"No se pudo obtener información para el pago ID: {payment_id}")
+                return Response({"status": "error"}, status=status.HTTP_404_NOT_FOUND)
+
+            logger.info(f"Información del pago obtenida: {payment_info.get('status')}")
+
+            if payment_info.get("status") == "approved":
+                metadata = payment_info.get("metadata", {})
+                cart_id = metadata.get("cart_id")
+                user_id = metadata.get("user_id")
+
+                if not cart_id:
+                    logger.error("Webhook no contiene 'cart_id' en metadata.")
+                    return Response({"status": "error", "reason": "missing cart_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+                carrito = get_object_or_404(Carrito, id=cart_id)
+                if not carrito.items.exists():
+                    logger.warning(f"El carrito {cart_id} ya estaba vacío al procesar el webhook.")
+                    return Response({"status": "ok", "reason": "cart already empty"}, status=status.HTTP_200_OK)
+
+                # Crear la orden
+                orden = Orden.objects.create(
+                    usuario_id=user_id,
+                    total=sum(item.subtotal for item in carrito.items.all()),
+                    estado='pagado',
+                    payment_id=payment_id,
+                    # Asumiendo que la info del comprador viene en el pago
+                    nombre=payment_info.get("payer", {}).get("first_name", "N/A"),
+                    email=payment_info.get("payer", {}).get("email", "N/A"),
+                    telefono=payment_info.get("payer", {}).get("phone", {}).get("number", "N/A"),
+                    # La info de envío debería recolectarse antes
+                    direccion="Dirección de prueba",
+                    ciudad="Ciudad de prueba",
+                    codigo_postal="12345",
+                    metodo_pago="mercadopago"
+                )
+
+                # Mover items del carrito a la orden y actualizar stock
+                for item_carrito in carrito.items.all():
+                    ItemOrden.objects.create(
+                        orden=orden,
+                        producto=item_carrito.producto,
+                        cantidad=item_carrito.cantidad,
+                        precio_unitario=item_carrito.producto.precio
+                    )
+                    
+                    # Actualizar stock del producto en todas las tiendas
+                    stocks_tienda = StockTienda.objects.filter(producto=item_carrito.producto)
+                    
+                    if stocks_tienda.exists():
+                        # Si hay stock en tiendas, reducir de la primera tienda disponible
+                        for stock in stocks_tienda:
+                            if stock.cantidad >= item_carrito.cantidad:
+                                stock.cantidad -= item_carrito.cantidad
+                                stock.save()
+                                logger.info(f"Stock actualizado en tienda {stock.tienda.nombre}: {stock.cantidad}")
+                                break
+                        else:
+                            # Si no hay suficiente stock en ninguna tienda, registrar el error
+                            logger.error(f"Stock insuficiente para {item_carrito.producto.nombre} al procesar orden {orden.id}")
+                    else:
+                        logger.warning(f"No hay stock registrado para {item_carrito.producto.nombre} en ninguna tienda")
+                
+                # Vaciar el carrito
+                carrito.items.all().delete()
+                logger.info(f"Orden {orden.id} creada y carrito {cart_id} vaciado.")
+
+            return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error procesando webhook de MercadoPago: {e}")
+            return Response({"status": "error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def simulate_payment(self, request):
+        """
+        Endpoint para simular un pago exitoso.
+        Crea la orden, vacía el carrito y actualiza el stock.
+        """
+        guest_cart_id = request.data.get('guest_cart_id')
+        user = request.user
+        carrito = self._get_cart(user, guest_cart_id)
         
-        if payment_info:
-            # Aquí puedes actualizar el estado de la orden según payment_info["status"]
-            # Posiblemente crear un método separado para esta lógica
-            return Response({"status": "ok"})
+        if not carrito or not carrito.items.exists():
+            return Response({'error': 'El carrito está vacío'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Obtener datos del formulario
+            shipping_data = {
+                'nombre': request.data.get('nombre', 'Cliente Simulado'),
+                'email': request.data.get('email', 'cliente@simulado.com'),
+                'telefono': request.data.get('telefono', '+56912345678'),
+                'direccion': request.data.get('direccion', 'Dirección Simulada'),
+                'ciudad': request.data.get('ciudad', 'Ciudad Simulada'),
+                'codigo_postal': request.data.get('codigo_postal', '12345'),
+            }
+
+            # Crear la orden
+            orden = Orden.objects.create(
+                usuario_id=user.id if user.is_authenticated else None,
+                total=sum(item.subtotal for item in carrito.items.all()),
+                estado='pagado',
+                payment_id=f"SIM-{carrito.id}-{int(time.time())}",
+                nombre=shipping_data['nombre'],
+                email=shipping_data['email'],
+                telefono=shipping_data['telefono'],
+                direccion=shipping_data['direccion'],
+                ciudad=shipping_data['ciudad'],
+                codigo_postal=shipping_data['codigo_postal'],
+                metodo_pago="pago_simulado"
+            )
+
+            # Mover items del carrito a la orden y actualizar stock
+            for item_carrito in carrito.items.all():
+                ItemOrden.objects.create(
+                    orden=orden,
+                    producto=item_carrito.producto,
+                    cantidad=item_carrito.cantidad,
+                    precio_unitario=item_carrito.producto.precio
+                )
+                
+                # Actualizar stock del producto en todas las tiendas
+                stocks_tienda = StockTienda.objects.filter(producto=item_carrito.producto)
+                
+                if stocks_tienda.exists():
+                    # Si hay stock en tiendas, reducir de la primera tienda disponible
+                    for stock in stocks_tienda:
+                        if stock.cantidad >= item_carrito.cantidad:
+                            stock.cantidad -= item_carrito.cantidad
+                            stock.save()
+                            logger.info(f"Stock actualizado en tienda {stock.tienda.nombre}: {stock.cantidad}")
+                            break
+                    else:
+                        # Si no hay suficiente stock en ninguna tienda, registrar el error
+                        logger.error(f"Stock insuficiente para {item_carrito.producto.nombre} al procesar orden {orden.id}")
+                else:
+                    logger.warning(f"No hay stock registrado para {item_carrito.producto.nombre} en ninguna tienda")
             
-        return Response({"status": "error", "message": "No se pudo obtener información del pago"}, 
-                      status=status.HTTP_400_BAD_REQUEST)
-                      
+            # Vaciar el carrito
+            carrito.items.all().delete()
+            logger.info(f"Orden simulada {orden.id} creada y carrito {carrito.id} vaciado.")
+
+            return Response({
+                'status': 'success',
+                'order_id': str(orden.id),
+                'payment_id': orden.payment_id,
+                'message': 'Pago simulado procesado exitosamente'
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error procesando pago simulado: {e}")
+            return Response({"status": "error", "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['post'])
     def update_quantity(self, request):
         item_id = request.data.get('item_id')
@@ -242,6 +411,63 @@ class CarritoViewSet(viewsets.GenericViewSet):
             )
         except Exception as e:
             logger.error(f"Error al obtener detalles de orden: {e}")
+            return Response(
+                {'error': 'Error interno del servidor'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def user_orders(self, request):
+        """Obtener historial de órdenes del usuario autenticado"""
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': 'Debes estar autenticado para ver tu historial de pedidos'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        try:
+            # Obtener todas las órdenes del usuario, ordenadas por fecha de creación (más recientes primero)
+            ordenes = Orden.objects.filter(usuario=request.user).order_by('-fecha_creacion')
+            
+            # Preparar los datos de respuesta
+            orders_data = []
+            for orden in ordenes:
+                # Obtener los items de la orden
+                items_orden = ItemOrden.objects.filter(orden=orden)
+                
+                order_data = {
+                    'orderId': str(orden.id),
+                    'paymentId': orden.payment_id,
+                    'status': orden.estado,
+                    'total': float(orden.total),
+                    'fechaCreacion': orden.fecha_creacion.strftime('%d/%m/%Y'),
+                    'fechaEstimadaEntrega': (orden.fecha_creacion.replace(day=orden.fecha_creacion.day + 7)).strftime('%d/%m/%Y'),
+                    'items': [
+                        {
+                            'id': item.id,
+                            'nombre': item.producto.nombre,
+                            'cantidad': item.cantidad,
+                            'precio': float(item.precio_unitario),
+                            'imagen': item.producto.imagen_url or 'https://via.placeholder.com/50'
+                        } for item in items_orden
+                    ],
+                    'customerInfo': {
+                        'nombre': orden.nombre,
+                        'email': orden.email,
+                        'telefono': orden.telefono
+                    },
+                    'shippingInfo': {
+                        'direccion': orden.direccion,
+                        'ciudad': orden.ciudad,
+                        'codigoPostal': orden.codigo_postal
+                    }
+                }
+                orders_data.append(order_data)
+            
+            return Response(orders_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error al obtener historial de órdenes: {e}")
             return Response(
                 {'error': 'Error interno del servidor'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

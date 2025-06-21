@@ -127,7 +127,7 @@ export const CarritoProvider = ({ children }) => {
       
       const response = await api.post('/carritos/update_quantity/', {
         item_id: itemId,
-        cantidad: cantidad,
+        new_quantity: cantidad,
         guest_cart_id: currentGuestCartId
       });
 

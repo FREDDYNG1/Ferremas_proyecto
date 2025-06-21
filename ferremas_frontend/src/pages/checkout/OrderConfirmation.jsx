@@ -42,6 +42,7 @@ const OrderConfirmation = () => {
   const paymentId = searchParams.get('payment_id');
   const status = searchParams.get('status');
   const externalReference = searchParams.get('external_reference');
+  const method = searchParams.get('method');
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -169,6 +170,20 @@ const OrderConfirmation = () => {
     }
   };
 
+  const getPaymentMethodText = () => {
+    if (method === 'simulated') {
+      return 'Pago Simulado (Desarrollo)';
+    }
+    return 'MercadoPago';
+  };
+
+  const getPaymentMethodColor = () => {
+    if (method === 'simulated') {
+      return 'warning';
+    }
+    return 'primary';
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -196,11 +211,17 @@ const OrderConfirmation = () => {
         <Typography variant="h6" color="text.secondary">
           Tu orden ha sido confirmada
         </Typography>
-        <Chip
-          label={getStatusText(orderDetails.status)}
-          color={getStatusColor(orderDetails.status)}
-          sx={{ mt: 2 }}
-        />
+        <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Chip
+            label={getStatusText(orderDetails.status)}
+            color={getStatusColor(orderDetails.status)}
+          />
+          <Chip
+            label={getPaymentMethodText()}
+            color={getPaymentMethodColor()}
+            variant="outlined"
+          />
+        </Box>
       </Paper>
 
       <Grid container spacing={3}>
@@ -254,25 +275,25 @@ const OrderConfirmation = () => {
               Productos Comprados
             </Typography>
             <List>
-              {orderDetails.items.map((item, index) => (
-                <ListItem key={index} sx={{ px: 0 }}>
+              {orderDetails.items.map((item) => (
+                <ListItem key={item.id} sx={{ px: 0 }}>
                   <ListItemAvatar>
                     <Avatar src={item.imagen} alt={item.nombre} />
                   </ListItemAvatar>
                   <ListItemText
                     primary={item.nombre}
-                    secondary={`Cantidad: ${item.cantidad}`}
+                    secondary={`Cantidad: ${item.cantidad} - $${item.precio.toLocaleString('es-CL')} c/u`}
                   />
                   <Typography variant="body1" fontWeight="bold">
-                    ${item.precio.toLocaleString('es-CL')}
+                    ${(item.precio * item.cantidad).toLocaleString('es-CL')}
                   </Typography>
                 </ListItem>
               ))}
             </List>
           </Paper>
 
-          {/* Información de envío */}
-          <Paper elevation={2} sx={{ p: 3 }}>
+          {/* Información del cliente */}
+          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
             <Box display="flex" alignItems="center" mb={2}>
               <ShippingIcon sx={{ mr: 1 }} />
               <Typography variant="h6">Información de Envío</Typography>
@@ -281,21 +302,34 @@ const OrderConfirmation = () => {
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Dirección de Envío
+                  Nombre
                 </Typography>
                 <Typography variant="body1">
-                  {orderDetails.shippingInfo.direccion}
-                </Typography>
-                <Typography variant="body1">
-                  {orderDetails.shippingInfo.ciudad}, {orderDetails.shippingInfo.codigoPostal}
+                  {orderDetails.customerInfo.nombre}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <Typography variant="body2" color="text.secondary">
-                  Fecha Estimada de Entrega
+                  Email
                 </Typography>
-                <Typography variant="body1" fontWeight="bold" color="primary.main">
-                  {orderDetails.fechaEstimadaEntrega}
+                <Typography variant="body1">
+                  {orderDetails.customerInfo.email}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">
+                  Teléfono
+                </Typography>
+                <Typography variant="body1">
+                  {orderDetails.customerInfo.telefono}
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  Dirección
+                </Typography>
+                <Typography variant="body1">
+                  {orderDetails.shippingInfo.direccion}, {orderDetails.shippingInfo.ciudad} {orderDetails.shippingInfo.codigoPostal}
                 </Typography>
               </Grid>
             </Grid>
@@ -306,68 +340,67 @@ const OrderConfirmation = () => {
         <Grid item xs={12} md={4}>
           <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Información de Contacto
+              Estado del Envío
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Tu orden será procesada y enviada en las próximas 24-48 horas.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Nombre
-            </Typography>
-            <Typography variant="body1" mb={2}>
-              {orderDetails.customerInfo.nombre}
-            </Typography>
-            
-            <Typography variant="body2" color="text.secondary">
-              Email
-            </Typography>
-            <Typography variant="body1" mb={2}>
-              {orderDetails.customerInfo.email}
-            </Typography>
-            
-            <Typography variant="body2" color="text.secondary">
-              Teléfono
-            </Typography>
-            <Typography variant="body1">
-              {orderDetails.customerInfo.telefono}
+              <strong>Fecha estimada de entrega:</strong><br />
+              {orderDetails.fechaEstimadaEntrega}
             </Typography>
           </Paper>
 
+          {method === 'simulated' && (
+            <Paper elevation={2} sx={{ p: 3, mb: 3, backgroundColor: '#fff3e0' }}>
+              <Typography variant="h6" gutterBottom color="warning.main">
+                Pago Simulado
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Esta fue una transacción simulada para desarrollo y testing. 
+                No se realizó ningún cargo real a tu cuenta.
+              </Typography>
+            </Paper>
+          )}
+
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
-              Próximos Pasos
+              ¿Necesitas ayuda?
             </Typography>
-            <Typography variant="body2" paragraph>
-              • Recibirás un email de confirmación
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Si tienes alguna pregunta sobre tu orden, no dudes en contactarnos.
             </Typography>
-            <Typography variant="body2" paragraph>
-              • Tu orden será procesada en 24-48 horas
-            </Typography>
-            <Typography variant="body2" paragraph>
-              • Te notificaremos cuando tu pedido esté en camino
-            </Typography>
-            
             <Button
-              variant="contained"
+              variant="outlined"
               fullWidth
-              startIcon={<HomeIcon />}
-              onClick={() => navigate('/')}
-              sx={{ mt: 2 }}
+              onClick={() => navigate('/contacto')}
             >
-              Volver al Inicio
+              Contactar Soporte
             </Button>
-            
-            {user && (
-              <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<ShoppingCartIcon />}
-                onClick={() => navigate('/cliente/mis-ordenes')}
-                sx={{ mt: 1 }}
-              >
-                Ver Mis Órdenes
-              </Button>
-            )}
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Botones de acción */}
+      <Box display="flex" gap={2} justifyContent="center" sx={{ mt: 4 }}>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<HomeIcon />}
+          onClick={() => navigate('/')}
+        >
+          Ir al Inicio
+        </Button>
+        
+        <Button
+          variant="outlined"
+          size="large"
+          startIcon={<ShoppingCartIcon />}
+          onClick={() => navigate('/cliente/mis-ordenes')}
+        >
+          Ver Mis Órdenes
+        </Button>
+      </Box>
     </Container>
   );
 };

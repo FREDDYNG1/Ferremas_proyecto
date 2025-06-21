@@ -15,23 +15,23 @@ class MercadoPagoService:
             raise ValueError("MercadoPago access token no configurado")
         self.sdk = mercadopago.SDK(self.access_token)
     
-    def create_preference(self, items, external_reference=None, payer_email=None):
+    def create_preference(self, items, metadata=None, external_reference=None, payer_email=None):
         """Crea una preferencia de pago en MercadoPago"""
 
-        # Prueba definitiva: Usar una URL pública para descartar problemas con localhost
-        base_url = "https://www.google.com"
+        # URLs de redirección para el frontend
+        frontend_url = "http://localhost:5173"
         
         back_urls = {
-            "success": base_url, # Redirigirá a Google en caso de éxito
-            "failure": "https://www.youtube.com", # Redirigirá a YouTube en caso de fallo
-            "pending": f"http://127.0.0.1:5173/checkout/pending",
+            "success": f"{frontend_url}/checkout/success",
+            "failure": f"{frontend_url}/checkout/failure",
+            "pending": f"{frontend_url}/checkout/pending",
         }
 
         preference_data = {
             "items": items,
             "back_urls": back_urls,
-            "auto_return": "approved",
             "external_reference": external_reference,
+            "metadata": metadata,
         }
         
         if payer_email:
