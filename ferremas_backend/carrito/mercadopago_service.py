@@ -19,7 +19,7 @@ class MercadoPagoService:
         """Crea una preferencia de pago en MercadoPago"""
 
         # URLs de redirección para el frontend
-        frontend_url = "http://localhost:5173"
+        frontend_url = "https://f473-186-189-101-32.ngrok-free.app"
         
         back_urls = {
             "success": f"{frontend_url}/checkout/success",
@@ -30,6 +30,7 @@ class MercadoPagoService:
         preference_data = {
             "items": items,
             "back_urls": back_urls,
+            "auto_return": "approved",  # Redirección automática cuando el pago es aprobado
             "external_reference": external_reference,
             "metadata": metadata,
         }
