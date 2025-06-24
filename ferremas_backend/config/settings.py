@@ -89,6 +89,9 @@ DATABASES = {
         'PASSWORD': 'Ferremas123+',
         'HOST': 'aws-0-us-east-2.pooler.supabase.com',
         'PORT': '5432',
+        'OPTIONS': {
+            'sslmode': 'require', # <--- Add this
+        }
     }
 }
 
