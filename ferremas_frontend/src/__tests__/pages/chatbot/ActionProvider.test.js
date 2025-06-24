@@ -39,6 +39,7 @@ describe('ActionProvider', () => {
   });
 
   it('debería responder con productos de la categoría detectada', async () => {
+    // Importa ActionProvider dinámicamente para que use los mocks actuales
     const { default: ActionProvider } = await import('../../../chatbot/ActionProvider');
 
     const provider = new ActionProvider(mockCreateChatBotMessage, mockSetState);
@@ -59,7 +60,7 @@ describe('ActionProvider', () => {
       })
     );
 
-    // Limpia la caché de módulos para reimportar con nuevo mock
+    // Limpia la caché ANTES de hacer el nuevo mock
     vi.resetModules();
 
     // Mock Supabase para que no retorne productos
@@ -82,6 +83,3 @@ describe('ActionProvider', () => {
     expect(mockCreateChatBotMessage).toHaveBeenCalledWith(expect.stringContaining('No encontré productos'));
   });
 });
-
-// Este test verifica que el ActionProvider maneje correctamente las respuestas del modelo y la búsqueda de productos en Supabase.
-// También maneja casos de error, como cuando no se encuentra una categoría o productos relacionados.
