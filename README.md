@@ -136,5 +136,39 @@ ferremas_backend/
 6. Empuja la rama (`git push origin feature/AmazingFeature`)
 7. Abre un Pull Request.
 
+## Variables de Entorno
+
+Para el correcto funcionamiento del backend, debes crear un archivo `.env` dentro de la carpeta `ferremas_backend/` con el siguiente contenido (ajusta los valores según tu configuración):
+
+```env
+SECRET_KEY='tu_clave_secreta_django'
+DEBUG=True
+
+# Database
+DB_ENGINE='django.db.backends.postgresql'
+DB_NAME='nombre_de_tu_base'
+DB_USER='usuario'
+DB_PASSWORD='contraseña'
+DB_HOST='host'
+DB_PORT='5432'
+```
+
+> **Nota:** No subas nunca tu archivo `.env` al repositorio. Ya está incluido en el `.gitignore` por seguridad.
+>
+> También puedes encontrar una plantilla en `ferremas_backend/.env.example`.
+
+## Documentación de la API (Swagger / OpenAPI)
+
+Cuando el backend está en ejecución, puedes acceder a la documentación interactiva de la API en:
+
+- [Swagger UI](http://127.0.0.1:8000/api/schema/swagger-ui/)
+- [ReDoc](http://127.0.0.1:8000/api/schema/redoc/)
+
+## Más documentación
+
+- [README del Frontend](ferremas_frontend/README.md)
+- [Guía de mensajes del Frontend](ferremas_frontend/README_MENSAJES.md)
+- [Guía de uso de Ngrok](README_NGROK.md)
+
 
 

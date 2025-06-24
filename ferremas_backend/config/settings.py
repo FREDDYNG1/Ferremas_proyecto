@@ -3,9 +3,11 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # Carga automáticamente las variables del archivo .env
-
-# El resto de tu settings...
+# Carga las variables desde el archivo .env (o temp.env temporalmente)
+# ¡¡¡IMPORTANTE!!! Cambia 'temp.env' a '.env' cuando renombres el archivo.
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'temp.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,10 +19,10 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tc-y52qxrp617#gf3d#m85r)snccl4$c-&#x6vr01dxiij3(u@'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'e271-186-189-101-32.ngrok-free.app']
 
@@ -83,12 +85,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres.ygffsntgrdngvikqklma',
-        'PASSWORD': 'Ferremas123+',
-        'HOST': 'aws-0-us-east-2.pooler.supabase.com',
-        'PORT': '5432',
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
