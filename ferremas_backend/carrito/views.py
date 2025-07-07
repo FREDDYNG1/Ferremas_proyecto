@@ -321,34 +321,33 @@ class CarritoViewSet(viewsets.GenericViewSet):
     def update_quantity(self, request):
         item_id = request.data.get('item_id')
         new_quantity = int(request.data.get('new_quantity'))
+        guest_cart_id = request.data.get('guest_cart_id')
+        user = request.user
 
         if not item_id or new_quantity is None:
             return Response({'error': 'Item ID and new quantity are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             item = ItemCarrito.objects.get(id=item_id)
-            # Optional: Add checks if the current user/guest owns this cart/item
-            # if request.user.is_authenticated and item.carrito.usuario != request.user:
-            #     return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
-            # elif not request.user.is_authenticated:
-            #     guest_cart_id = request.data.get('guest_cart_id') # Need to pass guest_cart_id from frontend
-            #     if str(item.carrito.id) != guest_cart_id:
-            #          return Response({'error': 'Not authorized or invalid cart'}, status=status.HTTP_403_FORBIDDEN)
-
+            
+            # Verificar permisos del usuario
+            if user.is_authenticated:
+                if item.carrito.usuario != user:
+                    return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                if str(item.carrito.id) != guest_cart_id:
+                    return Response({'error': 'Not authorized or invalid cart'}, status=status.HTTP_403_FORBIDDEN)
 
             item.cantidad = new_quantity
             item.save()
-            # Re-fetch the cart to update totals in the frontend
-            # Alternatively, calculate new total here and return
-            # For simplicity, let's just return the updated item data
+            
             updated_item_data = ItemCarritoSerializer(item).data
             return Response(updated_item_data, status=status.HTTP_200_OK)
 
         except ItemCarrito.DoesNotExist:
             return Response({'error': 'Item not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-             # Log the error for debugging
-            print(f"Error updating item quantity: {e}")
+            logger.error(f"Error updating item quantity: {e}")
             return Response({'error': 'An error occurred while updating quantity'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])

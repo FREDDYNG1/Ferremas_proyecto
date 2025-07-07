@@ -3,16 +3,10 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
-# Carga las variables desde el archivo .env (o temp.env temporalmente)
-# ¡¡¡IMPORTANTE!!! Cambia 'temp.env' a '.env' cuando renombres el archivo.
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'temp.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Carga las variables del archivo .env (asegúrate de que .env esté en la raíz del proyecto)
+# Carga las variables del archivo .env
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production

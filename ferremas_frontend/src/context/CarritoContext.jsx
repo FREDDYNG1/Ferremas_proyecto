@@ -173,8 +173,6 @@ export const CarritoProvider = ({ children }) => {
         metodo_pago: formData.metodo_pago || 'tarjeta'
       };
 
-      console.log('Enviando datos de checkout:', checkoutData); // Para depuración
-
       const response = await api.post('/carritos/checkout/', checkoutData);
 
       if (response.status === 200) {
